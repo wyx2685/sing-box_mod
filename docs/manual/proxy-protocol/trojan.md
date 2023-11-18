@@ -1,4 +1,8 @@
-# :material-horse: Trojan
+---
+icon: material/horse
+---
+
+# Trojan
 
 As the most commonly used TLS proxy made in China, Trojan can be used in various combinations,
 but only the combination of uTLS and multiplexing is recommended.
@@ -12,9 +16,9 @@ but only the combination of uTLS and multiplexing is recommended.
 
 ## :material-text-box-check: Password Generator
 
-| Generate Password          | Action                                        |
-|----------------------------|-----------------------------------------------|
-| <code id="password"><code> | <button onclick="generate()">Refresh</button> |
+| Generate Password          | Action                                                          |
+|----------------------------|-----------------------------------------------------------------|
+| <code id="password"><code> | <button class="md-button" onclick="generate()">Refresh</button> |
 
 <script>
     function generate() {

@@ -1,4 +1,8 @@
-# :material-pencil-ruler: General
+---
+icon: material/pencil-ruler
+---
+
+# General
 
 Describes and explains the functions implemented uniformly by sing-box graphical clients.
 

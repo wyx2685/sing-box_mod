@@ -44,7 +44,7 @@
 
 ### Clash API Fields
 
-!!! error ""
+!!! quote ""
 
     Clash API is not included by default, see [Installation](./#installation).
 
@@ -110,7 +110,7 @@ If not empty, `store_selected` will use a separate store keyed by it.
 
 ### V2Ray API Fields
 
-!!! error ""
+!!! quote ""
 
     V2Ray API is not included by default, see [Installation](./#installation).
 

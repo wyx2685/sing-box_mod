@@ -1,4 +1,8 @@
-# :material-server: Server
+---
+icon: material/server
+---
+
+# Server
 
 To use sing-box as a proxy protocol server, you pretty much only need to configure the inbound for that protocol.
 

@@ -1,4 +1,8 @@
-# :material-forum: Support
+---
+icon: material/forum
+---
+
+# Support
 
 | Channel                       | Link                                        |
 |:------------------------------|:--------------------------------------------|

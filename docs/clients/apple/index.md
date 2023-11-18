@@ -1,4 +1,8 @@
-# :material-apple: sing-box for Apple platforms
+---
+icon: material/apple
+---
+
+# sing-box for Apple platforms
 
 SFI/SFM/SFT allows users to manage and run local or remote sing-box configuration files, and provides
 platform-specific function implementation, such as TUN transparent proxy implementation.

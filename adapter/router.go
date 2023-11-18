@@ -42,6 +42,7 @@ type Router interface {
 	NetworkMonitor() tun.NetworkUpdateMonitor
 	InterfaceMonitor() tun.DefaultInterfaceMonitor
 	PackageManager() tun.PackageManager
+	WIFIState() WIFIState
 	Rules() []Rule
 
 	ClashServer() ClashServer
@@ -84,4 +85,9 @@ type DNSRule interface {
 
 type InterfaceUpdateListener interface {
 	InterfaceUpdated()
+}
+
+type WIFIState struct {
+	SSID  string
+	BSSID string
 }

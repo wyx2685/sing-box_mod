@@ -37,6 +37,16 @@ SFI/SFM/SFT provides an unprivileged TUN implementation through NetworkExtension
 | `exclude_package`             | ✖️        | Not implemented   |
 | `platform`                    | ✔️        | /                 |
 
+| Route/DNS rule option | Available        | Note                  |
+|-----------------------|------------------|-----------------------|
+| `process_name`        | :material-close: | No permission         |
+| `process_path`        | :material-close: | No permission         |
+| `package_name`        | :material-close: | /                     |
+| `user`                | :material-close: | No permission         |
+| `user_id`             | :material-close: | No permission         |
+| `wifi_ssid`           | :material-alert: | Only supported on iOS |
+| `wifi_bssid`          | :material-alert: | Only supported on iOS |
+
 ### Chore
 
 * Crash logs is located in `Settings` -> `View Service Log`

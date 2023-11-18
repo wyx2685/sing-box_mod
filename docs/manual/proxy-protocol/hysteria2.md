@@ -1,4 +1,8 @@
-# :material-lightning-bolt: Hysteria 2
+---
+icon: material/lightning-bolt
+---
+
+# Hysteria 2
 
 The most popular Chinese-made simple protocol based on QUIC, the selling point is Brutal,
 a congestion control algorithm that can resist packet loss by manually specifying the required rate by the user.
@@ -19,7 +23,6 @@ a congestion control algorithm that can resist packet loss by manually specifyin
 
 <script>
     function generate() {
-        const array = new Uint8Array(16);
         window.crypto.getRandomValues(array);
         document.getElementById("password").textContent = btoa(String.fromCharCode.apply(null, array));
     }

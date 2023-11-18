@@ -1,4 +1,8 @@
-# :material-package: Package Manager
+---
+icon: material/package
+---
+
+# Package Manager
 
 ## :material-download-box: Manual Installation
 

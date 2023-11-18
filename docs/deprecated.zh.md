@@ -1,4 +1,8 @@
-# :material-delete-alert: 废弃功能列表
+---
+icon: material/delete-alert
+---
+
+# 废弃功能列表
 
 ### 1.6.0
 

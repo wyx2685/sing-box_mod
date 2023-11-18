@@ -1,4 +1,8 @@
-# :material-file-code: Build from source
+---
+icon: material/file-code
+---
+
+# Build from source
 
 ## :material-graph: Requirements
 

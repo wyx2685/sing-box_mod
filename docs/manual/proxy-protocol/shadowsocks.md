@@ -1,4 +1,8 @@
-# :material-send: Shadowsocks
+---
+icon: material/send
+---
+
+# Shadowsocks
 
 As the most well-known Chinese-made proxy protocol,
 Shadowsocks exists in multiple versions,
@@ -12,10 +16,9 @@ but only AEAD 2022 ciphers TCP with multiplexing is recommended.
 
 ## :material-text-box-check: Password Generator
 
-
-| For `2022-blake3-aes-128-gcm` cipher | For other ciphers             | Action                                        |
-|--------------------------------------|-------------------------------|-----------------------------------------------|
-| <code id="password_16"><code>        | <code id="password_32"><code> | <button onclick="generate()">Refresh</button> |
+| For `2022-blake3-aes-128-gcm` cipher | For other ciphers             | Action                                                          |
+|--------------------------------------|-------------------------------|-----------------------------------------------------------------|
+| <code id="password_16"><code>        | <code id="password_32"><code> | <button class="md-button" onclick="generate()">Refresh</button> |
 
 <script>
     function generatePassword(element, length) {

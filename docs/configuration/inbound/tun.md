@@ -1,4 +1,4 @@
-!!! error ""
+!!! quote ""
 
     Only supported on Linux, Windows and macOS.
 
@@ -102,7 +102,7 @@ The maximum transmission unit.
 
 Set the default route to the Tun.
 
-!!! error ""
+!!! quote ""
 
     To avoid traffic loopback, set `route.auto_detect_interface` or `route.default_interface` or `outbound.bind_interface`
 
@@ -175,7 +175,7 @@ TCP/IP stack.
 
 #### include_interface
 
-!!! error ""
+!!! quote ""
 
     Interface rules are only supported on Linux and require auto_route.
 
@@ -191,7 +191,7 @@ Conflict with `include_interface`.
 
 #### include_uid
 
-!!! error ""
+!!! quote ""
 
     UID rules are only supported on Linux and require auto_route.
 
@@ -211,7 +211,7 @@ Exclude users in route, but in range.
 
 #### include_android_user
 
-!!! error ""
+!!! quote ""
 
     Android user and package rules are only supported on Android and require auto_route.
 

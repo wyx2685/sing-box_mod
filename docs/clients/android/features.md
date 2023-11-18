@@ -12,28 +12,38 @@ SFA allows you to run sing-box through ForegroundService or VpnService (when TUN
 
 SFA provides an unprivileged TUN implementation through Android VpnService.
 
-| TUN inbound option            | Available | Note               |
-|-------------------------------|-----------|--------------------|
-| `interface_name`              | ✖️        | Managed by Android |
-| `inet4_address`               | ✔️        | /                  |
-| `inet6_address`               | ✔️        | /                  |
-| `mtu`                         | ✔️        | /                  |
-| `auto_route`                  | ✔️        | /                  |
-| `strict_route`                | ✖️        | Not implemented    |
-| `inet4_route_address`         | ✔️        | /                  |
-| `inet6_route_address`         | ✔️        | /                  |
-| `inet4_route_exclude_address` | ✔️        | /                  |
-| `inet6_route_exclude_address` | ✔️        | /                  |
-| `endpoint_independent_nat`    | ✔️        | /                  |
-| `stack`                       | ✔️        | /                  |
-| `include_interface`           | ✖️        | No permission      |
-| `exclude_interface`           | ✖️        | No permission      |
-| `include_uid`                 | ✖️        | No permission      |
-| `exclude_uid`                 | ✖️        | No permission      |
-| `include_android_user`        | ✖️        | No permission      |
-| `include_package`             | ✔️        | /                  |
-| `exclude_package`             | ✔️        | /                  |
-| `platform`                    | ✔️        | /                  |
+| TUN inbound option            | Available        | Note               |
+|-------------------------------|------------------|--------------------|
+| `interface_name`              | :material-close: | Managed by Android |
+| `inet4_address`               | :material-check: | /                  |
+| `inet6_address`               | :material-check: | /                  |
+| `mtu`                         | :material-check: | /                  |
+| `auto_route`                  | :material-check: | /                  |
+| `strict_route`                | :material-close: | Not implemented    |
+| `inet4_route_address`         | :material-check: | /                  |
+| `inet6_route_address`         | :material-check: | /                  |
+| `inet4_route_exclude_address` | :material-check: | /                  |
+| `inet6_route_exclude_address` | :material-check: | /                  |
+| `endpoint_independent_nat`    | :material-check: | /                  |
+| `stack`                       | :material-check: | /                  |
+| `include_interface`           | :material-close: | No permission      |
+| `exclude_interface`           | :material-close: | No permission      |
+| `include_uid`                 | :material-close: | No permission      |
+| `exclude_uid`                 | :material-close: | No permission      |
+| `include_android_user`        | :material-close: | No permission      |
+| `include_package`             | :material-check: | /                  |
+| `exclude_package`             | :material-check: | /                  |
+| `platform`                    | :material-check: | /                  |
+
+| Route/DNS rule option | Available        | Note                              |
+|-----------------------|------------------|-----------------------------------|
+| `process_name`        | :material-close: | No permission                     |
+| `process_path`        | :material-close: | No permission                     |
+| `package_name`        | :material-check: | /                                 |
+| `user`                | :material-close: | Use `package_name` instead        |
+| `user_id`             | :material-close: | Use `package_name` instead        |
+| `wifi_ssid`           | :material-check: | Fine location permission required |
+| `wifi_bssid`          | :material-check: | Fine location permission required |
 
 ### Override
 

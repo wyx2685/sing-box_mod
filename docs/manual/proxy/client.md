@@ -1,4 +1,8 @@
-# :material-cellphone-link: Client
+---
+icon: material/cellphone-link
+---
+
+# Client
 
 ## :material-ray-start: Introduction
 

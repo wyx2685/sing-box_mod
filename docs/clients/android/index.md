@@ -1,4 +1,8 @@
-# :material-android: sing-box for Android
+---
+icon: material/android
+---
+
+# sing-box for Android
 
 SFA allows users to manage and run local or remote sing-box configuration files, and provides
 platform-specific function implementation, such as TUN transparent proxy implementation.

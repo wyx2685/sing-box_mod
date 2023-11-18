@@ -1,4 +1,8 @@
-# :material-delete-alert: Deprecated Feature List
+---
+icon: material/delete-alert
+---
+
+# Deprecated Feature List
 
 ### 1.6.0
 
