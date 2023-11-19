@@ -10,7 +10,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/sagernet/reality"
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/dialer"
 	"github.com/sagernet/sing-box/log"
@@ -20,6 +19,7 @@ import (
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ntp"
+	"github.com/xtls/reality"
 )
 
 var _ ServerConfigCompat = (*RealityServerConfig)(nil)
@@ -77,6 +77,7 @@ func NewRealityServer(ctx context.Context, logger log.Logger, options option.Inb
 	tlsConfig.SessionTicketsDisabled = true
 	tlsConfig.Type = N.NetworkTCP
 	tlsConfig.Dest = options.Reality.Handshake.ServerOptions.Build().String()
+	tlsConfig.Xver = options.Reality.Xver
 
 	tlsConfig.ServerNames = map[string]bool{options.ServerName: true}
 	privateKey, err := base64.RawURLEncoding.DecodeString(options.Reality.PrivateKey)

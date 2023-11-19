@@ -38,6 +38,7 @@ type InboundRealityOptions struct {
 	Handshake         InboundRealityHandshakeOptions `json:"handshake,omitempty"`
 	PrivateKey        string                         `json:"private_key,omitempty"`
 	ShortID           Listable[string]               `json:"short_id,omitempty"`
+	Xver              uint8                          `json:"xver,omitempty"`
 	MaxTimeDifference Duration                       `json:"max_time_difference,omitempty"`
 }
 
