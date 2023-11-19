@@ -6,7 +6,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/sagernet/sing-vmess"
+	vmess "github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common/auth"
 	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
@@ -70,7 +70,7 @@ func (s *Service[T]) NewConnection(ctx context.Context, conn net.Conn, metadata 
 	userFlow := s.userFlow[user]
 	if request.Flow == FlowVision && request.Command == vmess.NetworkUDP {
 		return E.New(FlowVision, " flow does not support UDP")
-	} else if request.Flow != userFlow {
+	} else if request.Flow != userFlow && request.Command != vmess.CommandUDP {
 		return E.New("flow mismatch: expected ", flowName(userFlow), ", but got ", flowName(request.Flow))
 	}
 
