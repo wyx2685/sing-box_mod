@@ -4,14 +4,14 @@ icon: material/cellphone-link
 
 # Client
 
-## :material-ray-start: Introduction
+### :material-ray-start: Introduction
 
 For a long time, the modern usage and principles of proxy clients
 for graphical operating systems have not been clearly described.
 However, we can categorize them into three types:
 system proxy, firewall redirection, and virtual interface.
 
-## :material-web-refresh: System Proxy
+### :material-web-refresh: System Proxy
 
 Almost all graphical environments support system-level proxies,
 which are essentially ordinary HTTP proxies that only support TCP.
@@ -38,7 +38,7 @@ flowchart LR
     udp[UDP packet] --> leak
 ```
 
-## :material-wall-fire: Firewall Redirection
+### :material-wall-fire: Firewall Redirection
 
 This type of usage typically relies on the firewall or hook interface provided by the operating system,
 such as Windows’ WFP, Linux’s redirect, TProxy and eBPF, and macOS’s pf.
@@ -46,11 +46,8 @@ Although it is intrusive and cumbersome to configure,
 it remains popular within the community of amateur proxy open source projects like V2Ray,
 due to the low technical requirements it imposes on the software.
 
-## :material-expansion-card: Virtual Interface
-
-All L2/L3 proxies (seriously defined VPNs, such as OpenVPN, WireGuard) are based on virtual network interfaces,
+### :material-expansion-card: Virtual Interface
 which is also the only way for all L4 proxies to work as VPNs on mobile platforms like Android, iOS.
-
 The sing-box inherits and develops clash-premium’s TUN inbound (L3 to L4 conversion)
 as the most reasonable method for performing transparent proxying.
 
@@ -80,4 +77,211 @@ flowchart TB
     default --> destination[Destination server]
     default --> proxy_server[Proxy server]
     proxy_server --> destination
+
 ```
+
+```
+
+## :material-cellphone-link: Examples
+
+### Basic TUN usage for Chinese users
+
+=== ":material-numeric-4-box: IPv4 only"
+
+    ```json
+    {
+      "dns": {
+        "servers": [
+          {
+            "tag": "google",
+            "address": "tls://8.8.8.8"
+          },
+          {
+            "tag": "local",
+            "address": "223.5.5.5",
+            "detour": "direct"
+          }
+        ],
+        "rules": [
+          {
+            "outbound": "any",
+            "server": "local"
+          }
+        ],
+        "strategy": "ipv4_only"
+      },
+      "inbounds": [
+        {
+          "type": "tun",
+          "inet4_address": "172.19.0.1/30",
+          "auto_route": true,
+          "strict_route": false
+        }
+      ],
+      "outbounds": [
+        // ...
+        {
+          "type": "direct",
+          "tag": "direct"
+        },
+        {
+          "type": "dns",
+          "tag": "dns-out"
+        }
+      ],
+      "route": {
+        "rules": [
+          {
+            "protocol": "dns",
+            "outbound": "dns-out"
+          },
+          {
+            "geoip": [
+              "private"
+            ],
+            "outbound": "direct"
+          }
+        ],
+        "auto_detect_interface": true
+      }
+    }
+    ```
+
+=== ":material-numeric-6-box: IPv4 & IPv6"
+
+    ```json
+    {
+      "dns": {
+        "servers": [
+          {
+            "tag": "google",
+            "address": "tls://8.8.8.8"
+          },
+          {
+            "tag": "local",
+            "address": "223.5.5.5",
+            "detour": "direct"
+          }
+        ],
+        "rules": [
+          {
+            "outbound": "any",
+            "server": "local"
+          }
+        ]
+      },
+      "inbounds": [
+        {
+          "type": "tun",
+          "inet4_address": "172.19.0.1/30",
+          "inet6_address": "fdfe:dcba:9876::1/126",
+          "auto_route": true,
+          "strict_route": false
+        }
+      ],
+      "outbounds": [
+        // ...
+        {
+          "type": "direct",
+          "tag": "direct"
+        },
+        {
+          "type": "dns",
+          "tag": "dns-out"
+        }
+      ],
+      "route": {
+        "rules": [
+          {
+            "protocol": "dns",
+            "outbound": "dns-out"
+          },
+          {
+            "geoip": [
+              "private"
+            ],
+            "outbound": "direct"
+          }
+        ],
+        "auto_detect_interface": true
+      }
+    }
+    ```
+
+=== ":material-domain-switch: FakeIP"
+
+    ```json
+    {
+      "dns": {
+        "servers": [
+          {
+            "tag": "google",
+            "address": "tls://8.8.8.8"
+          },
+          {
+            "tag": "local",
+            "address": "223.5.5.5",
+            "detour": "direct"
+          },
+          {
+            "tag": "remote",
+            "address": "fakeip"
+          }
+        ],
+        "rules": [
+          {
+            "outbound": "any",
+            "server": "local"
+          },
+          {
+            "query_type": [
+              "A",
+              "AAAA"
+            ],
+            "server": "remote"
+          }
+        ],
+        "fakeip": {
+          "enabled": true,
+          "inet4_range": "198.18.0.0/15",
+          "inet6_range": "fc00::/18"
+        },
+        "independent_cache": true
+      },
+      "inbounds": [
+        {
+          "type": "tun",
+          "inet4_address": "172.19.0.1/30",
+          "inet6_address": "fdfe:dcba:9876::1/126",
+          "auto_route": true,
+          "strict_route": true
+        }
+      ],
+      "outbounds": [
+        // ...
+        {
+          "type": "direct",
+          "tag": "direct"
+        },
+        {
+          "type": "dns",
+          "tag": "dns-out"
+        }
+      ],
+      "route": {
+        "rules": [
+          {
+            "protocol": "dns",
+            "outbound": "dns-out"
+          },
+          {
+            "geoip": [
+              "private"
+            ],
+            "outbound": "direct"
+          }
+        ],
+        "auto_detect_interface": true
+      }
+    }
+    ```

@@ -17,12 +17,13 @@ a congestion control algorithm that can resist packet loss by manually specifyin
 
 ## :material-text-box-check: Password Generator
 
-| Generate Password          | Action                                        |
-|----------------------------|-----------------------------------------------|
-| <code id="password"><code> | <button onclick="generate()">Refresh</button> |
+| Generate Password          | Action                                                          |
+|----------------------------|-----------------------------------------------------------------|
+| <code id="password"><code> | <button class="md-button" onclick="generate()">Refresh</button> |
 
 <script>
     function generate() {
+        const array = new Uint8Array(16);
         window.crypto.getRandomValues(array);
         document.getElementById("password").textContent = btoa(String.fromCharCode.apply(null, array));
     }
