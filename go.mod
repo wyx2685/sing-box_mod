@@ -19,7 +19,7 @@ require (
 	github.com/libdns/cloudflare v0.1.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mholt/acmez v1.2.0
-	github.com/miekg/dns v1.1.56
+	github.com/miekg/dns v1.1.57
 	github.com/ooni/go-libtor v1.1.8
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/sagernet/bbolt v0.0.0-20231014093535-ea5cb2fe9f0a
@@ -27,15 +27,14 @@ require (
 	github.com/sagernet/gomobile v0.0.0-20230915142329-c6740b6d2950
 	github.com/sagernet/gvisor v0.0.0-20231119034329-07cfb6aaf930
 	github.com/sagernet/quic-go v0.40.0
-	github.com/sagernet/reality v0.0.0-20230406110435-ee17307e7691
-	github.com/sagernet/sing v0.2.18-0.20231119032432-6a556bfa50cc
-	github.com/sagernet/sing-dns v0.1.11-0.20231116102430-5a2133f5d358
+	github.com/sagernet/sing v0.2.18-0.20231124125253-2dcabf4bfcbc
+	github.com/sagernet/sing-dns v0.1.11
 	github.com/sagernet/sing-mux v0.1.5-0.20231109075101-6b086ed6bb07
-	github.com/sagernet/sing-quic v0.1.4-0.20231114135334-e2a6aab55cca
+	github.com/sagernet/sing-quic v0.1.5-0.20231123150216-00957d136203
 	github.com/sagernet/sing-shadowsocks v0.2.5
-	github.com/sagernet/sing-shadowsocks2 v0.1.4
+	github.com/sagernet/sing-shadowsocks2 v0.1.5
 	github.com/sagernet/sing-shadowtls v0.1.4
-	github.com/sagernet/sing-tun v0.1.20-0.20231119035513-f6ea97c5af71
+	github.com/sagernet/sing-tun v0.1.21-0.20231119035513-f6ea97c5af71
 	github.com/sagernet/sing-vmess v0.1.8
 	github.com/sagernet/smux v0.0.0-20230312102458-337ec2a5af37
 	github.com/sagernet/tfo-go v0.0.0-20230816093905-5a5c285d44a6

@@ -4,6 +4,23 @@ icon: material/alert-decagram
 
 # ChangeLog
 
+#### 1.7.0-rc.3
+
+* Fixes and improvements
+
+#### 1.7.0-rc.2
+
+* Fix missing UDP user context on TUIC/Hysteria2 inbounds
+* macOS: Add button for uninstall SystemExtension in the standalone graphical client
+
+#### 1.6.6
+
+* Fixes and improvements
+
+#### 1.7.0-rc.1
+
+* Fixes and improvements
+
 #### 1.7.0-beta.5
 
 * Update gVisor to 20231113.0

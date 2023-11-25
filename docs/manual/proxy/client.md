@@ -47,7 +47,10 @@ it remains popular within the community of amateur proxy open source projects li
 due to the low technical requirements it imposes on the software.
 
 ### :material-expansion-card: Virtual Interface
+
+All L2/L3 proxies (seriously defined VPNs, such as OpenVPN, WireGuard) are based on virtual network interfaces,
 which is also the only way for all L4 proxies to work as VPNs on mobile platforms like Android, iOS.
+
 The sing-box inherits and develops clash-premium’s TUN inbound (L3 to L4 conversion)
 as the most reasonable method for performing transparent proxying.
 
@@ -67,7 +70,7 @@ flowchart TB
     assemble --> conn[TCP and UDP connections]
     conn --> router[sing-box Router]
     router --> direct[Direct outbound]
-    router -->  proxy[Proxy outbounds]
+    router --> proxy[Proxy outbounds]
     router -- DNS hijack --> dns_out[DNS outbound]
     dns_out --> dns_router[DNS router]
     dns_router --> router
@@ -77,9 +80,6 @@ flowchart TB
     default --> destination[Destination server]
     default --> proxy_server[Proxy server]
     proxy_server --> destination
-
-```
-
 ```
 
 ## :material-cellphone-link: Examples
@@ -282,6 +282,144 @@ flowchart TB
           }
         ],
         "auto_detect_interface": true
+      }
+    }
+    ```
+
+### Traffic bypass usage for Chinese users
+
+=== ":material-dns: DNS rules"
+
+    !!! info
+    
+        DNS rules are optional if FakeIP is used.
+
+    ```json
+    {
+      "dns": {
+        "servers": [
+          {
+            "tag": "google",
+            "address": "tls://8.8.8.8"
+          },
+          {
+            "tag": "local",
+            "address": "223.5.5.5",
+            "detour": "direct"
+          }
+        ],
+        "rules": [
+          {
+            "outbound": "any",
+            "server": "local"
+          },
+          {
+            "clash_mode": "Direct",
+            "server": "local"
+          },
+          {
+            "clash_mode": "Global",
+            "server": "google"
+          },
+          {
+            "type": "logical",
+            "mode": "and",
+            "rules": [
+              {
+                "geosite": "geolocation-!cn",
+                "invert": true
+              },
+              {
+                "geosite": [
+                  "cn",
+                  "category-companies@cn"
+                ],
+              }
+            ],
+            "server": "local"
+          }
+        ]
+      }
+    }
+    ```
+
+=== ":material-router-network: Route rules"
+
+    ```json
+    {
+      "outbounds": [
+        {
+          "type": "direct",
+          "tag": "direct"
+        },
+        {
+          "type": "block",
+          "tag": "block"
+        }
+      ],
+      "route": {
+        "rules": [
+          {
+            "type": "logical",
+            "mode": "or",
+            "rules": [
+              {
+                "protocol": "dns"
+              },
+              {
+                "port": 53
+              }
+            ],
+            "outbound": "dns"
+          },
+          {
+            "geoip": "private",
+            "outbound": "direct"
+          },
+          {
+            "clash_mode": "Direct",
+            "outbound": "direct"
+          },
+          {
+            "clash_mode": "Global",
+            "outbound": "default"
+          },
+          {
+            "type": "logical",
+            "mode": "or",
+            "rules": [
+              {
+                "port": 853
+              },
+              {
+                "network": "udp",
+                "port": 443
+              },
+              {
+                "protocol": "stun"
+              }
+            ],
+            "outbound": "block"
+          },
+          {
+            "type": "logical",
+            "mode": "and",
+            "rules": [
+              {
+                "geosite": "geolocation-!cn",
+                "invert": true
+              },
+              {
+                "geosite": [
+                  "cn",
+                  "category-companies@cn"
+                ],
+                "geoip": "cn"
+              }
+            ],
+            "outbound": "direct"
+          }
+        ]
       }
     }
     ```

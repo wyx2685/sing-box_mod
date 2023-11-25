@@ -55,12 +55,36 @@ icon: material/package
     |------------|--------------------|---------------------|------------------------------|---------------------|
     | Termux     | Android            | [sing-box][termux]  | `pkg add sing-box`           | :material-check:    |
 
+## :material-book-multiple: Service Management
+
+For Linux systems with [systemd][systemd], usually the installation already includes a sing-box service,
+you can manage the service using the following command:
+
+| Operation | Command                                       |
+|-----------|-----------------------------------------------|
+| Enable    | `sudo systemctl enable sing-box`              |
+| Disable   | `sudo systemctl disable sing-box`             |
+| Start     | `sudo systemctl start sing-box`               |
+| Stop      | `sudo systemctl stop sing-box`                |
+| Kill      | `sudo systemctl kill sing-box`                |
+| Restart   | `sudo systemctl restart sing-box`             |
+| Logs      | `sudo journalctl -u sing-box --output cat -e` |
+| New Logs  | `sudo journalctl -u sing-box --output cat -f` |
 
 [alpine]: https://pkgs.alpinelinux.org/packages?name=sing-box
+
 [aur]: https://aur.archlinux.org/packages/sing-box
+
 [nixpkgs]: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/tools/networking/sing-box/default.nix
+
 [termux]: https://github.com/termux/termux-packages/tree/master/packages/sing-box
+
 [brew]: https://formulae.brew.sh/formula/sing-box
+
 [choco]: https://chocolatey.org/packages/sing-box
+
 [scoop]: https://github.com/ScoopInstaller/Main/blob/master/bucket/sing-box.json
+
 [winget]: https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/SagerNet/sing-box
+
+[systemd]: https://systemd.io/

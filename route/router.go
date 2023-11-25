@@ -26,10 +26,10 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/outbound"
 	"github.com/sagernet/sing-box/transport/fakeip"
-	"github.com/sagernet/sing-dns"
+	dns "github.com/sagernet/sing-dns"
 	mux "github.com/sagernet/sing-mux"
-	"github.com/sagernet/sing-tun"
-	"github.com/sagernet/sing-vmess"
+	tun "github.com/sagernet/sing-tun"
+	vmess "github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
@@ -1038,6 +1038,17 @@ func (r *Router) ResetNetwork() error {
 	return nil
 }
 
+func (r *Router) updateWIFIState() {
+	if r.platformInterface == nil {
+		return
+	}
+	state := r.platformInterface.ReadWIFIState()
+	if state != r.wifiState {
+		r.wifiState = state
+		r.logger.Info("updated WIFI state: SSID=", state.SSID, ", BSSID=", state.BSSID)
+	}
+}
+
 func (r *Router) AddInbound(inbound adapter.Inbound) error {
 	r.actionLock.Lock()
 	defer r.actionLock.Unlock()
@@ -1088,15 +1099,4 @@ func (r *Router) UpdateDnsRules(rules []option.DNSRule) error {
 
 func (r *Router) GetCtx() context.Context {
 	return r.ctx
-}
-
-func (r *Router) updateWIFIState() {
-	if r.platformInterface == nil {
-		return
-	}
-	state := r.platformInterface.ReadWIFIState()
-	if state != r.wifiState {
-		r.wifiState = state
-		r.logger.Info("updated WIFI state: SSID=", state.SSID, ", BSSID=", state.BSSID)
-	}
 }
