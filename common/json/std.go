@@ -1,3 +1,5 @@
+//go:build !go1.21 || without_contextjson
+
 package json
 
 import "encoding/json"
@@ -15,4 +17,5 @@ type (
 	Token       = json.Token
 	Delim       = json.Delim
 	SyntaxError = json.SyntaxError
+	RawMessage  = json.RawMessage
 )

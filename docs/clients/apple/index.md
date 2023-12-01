@@ -25,9 +25,8 @@ platform-specific function implementation, such as TUN transparent proxy impleme
 brew install sfm
 ```
 
-
-* [Github Releases](https://github.com/SagerNet/sing-box/releases)
+* [GitHub Releases](https://github.com/SagerNet/sing-box/releases)
 
 ## :material-source-repository: Source code
-* [GitHub](https://github.com/SagerNet/sing-box-for-apple)
 
+* [GitHub](https://github.com/SagerNet/sing-box-for-apple)
