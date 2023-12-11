@@ -2,7 +2,108 @@
 icon: material/alert-decagram
 ---
 
-# ChangeLog
+#### 1.8.0-beta.2
+
+* Fixes and improvements
+
+#### 1.8.0-beta.1
+
+* Fix GSO support
+* Fixes and improvements
+
+#### 1.8.0-alpha.17
+
+* Add GSO support for TUN and WireGuard system interface **1**
+* Update uTLS to 1.5.4 **2**
+* Update dependencies **3**
+* Fixes and improvements
+
+**1**:
+
+See [TUN](/configuration/inbound/tun) inbound and [WireGuard](/configuration/outbound/wireguard) outbound.
+
+**2**:
+
+Added some new [fingerprints](/configuration/shared/tls#utls).
+Also, starting with this release, uTLS requires at least Go 1.20.
+
+**3**:
+
+Updated `cloudflare-tls`, `gomobile`, `smux`, `tfo-go` and `wireguard-go` to latest, and `gvisor` to `20231204.0`
+
+This may break something, good luck!
+
+#### 1.7.4
+
+* Fixes and improvements
+
+_Due to the long waiting time, this version is no longer waiting for approval
+by the Apple App Store, so updates to Apple Platforms will be delayed._
+
+#### 1.8.0-alpha.16
+
+* Fixes and improvements
+
+#### 1.8.0-alpha.15
+
+* Some chaotic changes **1**
+* Fixes and improvements
+
+**1**:
+
+Designed to optimize memory usage of idle connections, may take effect on the following protocols:
+
+| Protocol                                             | TCP              | UDP              |
+|------------------------------------------------------|------------------|------------------|
+| HTTP proxy server                                    | :material-check: | /                |
+| SOCKS5                                               | :material-close: | :material-check: |
+| Shadowsocks none/AEAD/AEAD2022                       | :material-check: | :material-check: |
+| Trojan                                               | /                | :material-check: |
+| TUIC/Hysteria/Hysteria2                              | :material-close: | :material-check: |
+| Multiplex                                            | :material-close: | :material-check: |
+| Plain TLS (Trojan/VLESS without extra sub-protocols) | :material-check: | /                |
+| Other protocols                                      | :material-close: | :material-close: |
+
+At the same time, everything existing may be broken, please actively report problems with this version.
+
+#### 1.8.0-alpha.13
+
+* Fixes and improvements
+
+#### 1.8.0-alpha.10
+
+* Add `idle_timeout` for URLTest outbound **1**
+* Fixes and improvements
+
+**1**:
+
+When URLTest is idle for a certain period of time, the scheduled delay test will be paused.
+
+#### 1.7.2
+
+* Fixes and improvements
+
+#### 1.8.0-alpha.8
+
+* Add context to JSON decode error message **1**
+* Reject internal fake-ip queries **2**
+* Fixes and improvements
+
+**1**:
+
+JSON parse errors will now include the current key path.
+Only takes effect when compiled with Go 1.21+.
+
+**2**:
+
+All internal DNS queries now skip DNS rules with `server` type `fakeip`,
+and the default DNS server can no longer be `fakeip`.
+
+This change is intended to break incorrect usage and essentially requires no action.
+
+#### 1.8.0-alpha.7
+
+* Fixes and improvements
 
 #### 1.8.0-alpha.8
 
@@ -118,11 +219,14 @@ The new HTTPUpgrade transport has better performance than WebSocket and is bette
 
 **3**:
 
-Starting in 1.7.0, multiplexing support is no longer enabled by default and needs to be turned on explicitly in inbound options.
+Starting in 1.7.0, multiplexing support is no longer enabled by default
+and needs to be turned on explicitly in inbound
+options.
 
 **4**
 
-Hysteria Brutal Congestion Control Algorithm in TCP. A kernel module needs to be installed on the Linux server, see [TCP Brutal](/configuration/shared/tcp-brutal) for details.
+Hysteria Brutal Congestion Control Algorithm in TCP. A kernel module needs to be installed on the Linux server,
+see [TCP Brutal](/configuration/shared/tcp-brutal) for details.
 
 **5**:
 
@@ -298,7 +402,8 @@ When `auto_route` is enabled and `strict_route` is disabled, the device can now 
 
 **2**:
 
-Built using Go 1.20, the last version that will run on Windows 7, 8, Server 2008, Server 2012 and macOS 10.13 High
+Built using Go 1.20, the last version that will run on
+Windows 7, 8, Server 2008, Server 2012 and macOS 10.13 High
 Sierra, 10.14 Mojave.
 
 #### 1.6.0-rc.4
@@ -312,11 +417,10 @@ Sierra, 10.14 Mojave.
 
 **1**:
 
+
 Built using Go 1.20, the last version that will run on Windows 7, 8, Server 2008, Server 2012 and macOS 10.13 High
-Sierra, 10.14 Mojave.
 
 #### 1.6.0-beta.4
-
 * Fix IPv6 `auto_route` for Linux **1**
 * Fixes and improvements
 

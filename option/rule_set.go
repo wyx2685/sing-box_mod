@@ -3,12 +3,12 @@ package option
 import (
 	"reflect"
 
-	"github.com/sagernet/sing-box/common/json"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/domain"
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
+	"github.com/sagernet/sing/common/json"
 
 	"go4.org/netipx"
 )
@@ -42,11 +42,11 @@ func (r *RuleSet) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	if r.Tag == "" {
-		return E.New("missing rule_set.[].tag")
+		return E.New("missing tag")
 	}
 	switch r.Format {
 	case "":
-		return E.New("missing rule_set.[].format")
+		return E.New("missing format")
 	case C.RuleSetFormatSource, C.RuleSetFormatBinary:
 	default:
 		return E.New("unknown rule set format: " + r.Format)
@@ -58,7 +58,7 @@ func (r *RuleSet) UnmarshalJSON(bytes []byte) error {
 	case C.RuleSetTypeRemote:
 		v = &r.RemoteOptions
 	case "":
-		return E.New("missing rule_set.[].type")
+		return E.New("missing type")
 	default:
 		return E.New("unknown rule set type: " + r.Type)
 	}

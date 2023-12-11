@@ -109,8 +109,10 @@ func readRule(reader io.Reader, recovery bool) (rule option.HeadlessRule, err er
 	}
 	switch ruleType {
 	case 0:
+		rule.Type = C.RuleTypeDefault
 		rule.DefaultOptions, err = readDefaultRule(reader, recovery)
 	case 1:
+		rule.Type = C.RuleTypeLogical
 		rule.LogicalOptions, err = readLogicalRule(reader, recovery)
 	default:
 		err = E.New("unknown rule type: ", ruleType)

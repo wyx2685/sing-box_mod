@@ -6,13 +6,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sagernet/sing-box/common/json"
+	"github.com/oschwald/maxminddb-golang"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	E "github.com/sagernet/sing/common/exceptions"
-
-	"github.com/oschwald/maxminddb-golang"
+	"github.com/sagernet/sing/common/json"
 	"github.com/spf13/cobra"
 )
 

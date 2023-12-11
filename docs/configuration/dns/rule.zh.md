@@ -131,9 +131,11 @@ icon: material/alert-decagram
     默认规则使用以下匹配逻辑:  
     (`domain` || `domain_suffix` || `domain_keyword` || `domain_regex` || `geosite`) &&  
     (`port` || `port_range`) &&  
-    (`source_geoip` || `source_ip_cidr`) &&  
+    (`source_geoip` || `source_ip_cidr` || `source_ip_is_private`) &&  
     (`source_port` || `source_port_range`) &&  
     `other fields`
+
+    另外，引用的规则集可视为被合并，而不是作为一个单独的规则子项。
 
 #### inbound
 
@@ -181,7 +183,7 @@ DNS 查询类型。值可以为整数或者类型名称字符串。
 
 !!! failure "已在 sing-box 1.8.0 废弃"
 
-    Geosite 已废弃且可能在不久的将来移除，参阅 [迁移指南](/migration/#migrate-geosite-to-rule-sets)。
+    Geosite 已废弃且可能在不久的将来移除，参阅 [迁移指南](/zh/migration/#geosite)。
 
 匹配 Geosite。
 
@@ -189,7 +191,7 @@ DNS 查询类型。值可以为整数或者类型名称字符串。
 
 !!! failure "已在 sing-box 1.8.0 废弃"
 
-    GeoIp 已废弃且可能在不久的将来移除，参阅 [迁移指南](/migration/#migrate-geoip-to-rule-sets)。
+    GeoIP 已废弃且可能在不久的将来移除，参阅 [迁移指南](/zh/migration/#geoip)。
 
 匹配源 GeoIP。
 
