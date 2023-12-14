@@ -92,11 +92,12 @@ type Router struct {
 	clashServer                        adapter.ClashServer
 	v2rayServer                        adapter.V2RayServer
 	platformInterface                  platform.Interface
+	needWIFIState                      bool
+	needPackageManager                 bool
+	wifiState                          adapter.WIFIState
+	started                            bool
 
-	actionLock    sync.RWMutex
-	needWIFIState bool
-	wifiState     adapter.WIFIState
-	started       bool
+	actionLock sync.RWMutex
 }
 
 func NewRouter(
@@ -130,6 +131,9 @@ func NewRouter(
 		pauseManager:          pause.ManagerFromContext(ctx),
 		platformInterface:     platformInterface,
 		needWIFIState:         hasRule(options.Rules, isWIFIRule) || hasDNSRule(dnsOptions.Rules, isWIFIDNSRule),
+		needPackageManager: C.IsAndroid && platformInterface == nil && common.Any(inbounds, func(inbound option.Inbound) bool {
+			return len(inbound.TunOptions.IncludePackage) > 0 || len(inbound.TunOptions.ExcludePackage) > 0
+		}),
 	}
 	router.dnsClient = dns.NewClient(dns.ClientOptions{
 		DisableCache:     dnsOptions.DNSClientOptions.DisableCache,
@@ -515,9 +519,8 @@ func (r *Router) Start() error {
 			needWIFIStateFromRuleSet = true
 		}
 	}
-	needPackageManager := C.IsAndroid && r.platformInterface == nil
-	if needProcessFromRuleSet || r.needFindProcess || needPackageManager {
-		if needPackageManager {
+	if needProcessFromRuleSet || r.needFindProcess || r.needPackageManager {
+		if C.IsAndroid && r.platformInterface == nil {
 			monitor.Start("initialize package manager")
 			packageManager, err := tun.NewPackageManager(r)
 			monitor.Finish()
@@ -676,6 +679,19 @@ func (r *Router) Close() error {
 		monitor.Finish()
 	}
 	return err
+}
+
+func (r *Router) PostStart() error {
+	if len(r.ruleSets) > 0 {
+		for i, ruleSet := range r.ruleSets {
+			err := ruleSet.PostStart()
+			if err != nil {
+				return E.Cause(err, "post start rule-set[", i, "]")
+			}
+		}
+	}
+	r.started = true
+	return nil
 }
 
 func (r *Router) Outbound(tag string) (adapter.Outbound, bool) {

@@ -57,8 +57,7 @@ func readConfigAt(path string) (*OptionsEntry, error) {
 	if err != nil {
 		return nil, E.Cause(err, "read config at ", path)
 	}
-	var options option.Options
-	err = options.UnmarshalJSON(configContent)
+	options, err := json.UnmarshalExtended[option.Options](configContent)
 	if err != nil {
 		return nil, E.Cause(err, "decode config at ", path)
 	}

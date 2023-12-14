@@ -12,6 +12,11 @@ icon: material/arrange-bring-forward
 
 !!! info "References"
 
+    [Clash API](/configuration/experimental/clash-api) / 
+    [Cache File](/configuration/experimental/cache-file)
+
+=== ":material-card-remove: Deprecated"
+
     ```json
     {
       "experimental": {
