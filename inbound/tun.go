@@ -12,7 +12,7 @@ import (
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing-tun"
+	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
@@ -42,10 +42,6 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 	tunMTU := options.MTU
 	if tunMTU == 0 {
 		tunMTU = 9000
-	}
-	gsoMaxSize := options.GSOMaxSize
-	if gsoMaxSize == 0 {
-		gsoMaxSize = 65536
 	}
 	var udpTimeout int64
 	if options.UDPTimeout != 0 {
@@ -79,7 +75,6 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 			Name:                     options.InterfaceName,
 			MTU:                      tunMTU,
 			GSO:                      options.GSO,
-			GSOMaxSize:               gsoMaxSize,
 			Inet4Address:             options.Inet4Address,
 			Inet6Address:             options.Inet6Address,
 			AutoRoute:                options.AutoRoute,

@@ -128,7 +128,7 @@ func NewRouter(
 		autoDetectInterface:   options.AutoDetectInterface,
 		defaultInterface:      options.DefaultInterface,
 		defaultMark:           options.DefaultMark,
-		pauseManager:          pause.ManagerFromContext(ctx),
+		pauseManager:          service.FromContext[pause.Manager](ctx),
 		platformInterface:     platformInterface,
 		needWIFIState:         hasRule(options.Rules, isWIFIRule) || hasDNSRule(dnsOptions.Rules, isWIFIDNSRule),
 		needPackageManager: C.IsAndroid && platformInterface == nil && common.Any(inbounds, func(inbound option.Inbound) bool {
@@ -421,6 +421,35 @@ func (r *Router) Outbounds() []adapter.Outbound {
 	return r.outbounds
 }
 
+func (r *Router) PreStart() error {
+	monitor := taskmonitor.New(r.logger, C.DefaultStartTimeout)
+	if r.interfaceMonitor != nil {
+		monitor.Start("initialize interface monitor")
+		err := r.interfaceMonitor.Start()
+		monitor.Finish()
+		if err != nil {
+			return err
+		}
+	}
+	if r.networkMonitor != nil {
+		monitor.Start("initialize network monitor")
+		err := r.networkMonitor.Start()
+		monitor.Finish()
+		if err != nil {
+			return err
+		}
+	}
+	if r.fakeIPStore != nil {
+		monitor.Start("initialize fakeip store")
+		err := r.fakeIPStore.Start()
+		monitor.Finish()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *Router) Start() error {
 	monitor := taskmonitor.New(r.logger, C.DefaultStartTimeout)
 	if r.needGeoIPDatabase {
@@ -434,22 +463,6 @@ func (r *Router) Start() error {
 	if r.needGeositeDatabase {
 		monitor.Start("initialize geosite database")
 		err := r.prepareGeositeDatabase()
-		monitor.Finish()
-		if err != nil {
-			return err
-		}
-	}
-	if r.interfaceMonitor != nil {
-		monitor.Start("initialize interface monitor")
-		err := r.interfaceMonitor.Start()
-		monitor.Finish()
-		if err != nil {
-			return err
-		}
-	}
-	if r.networkMonitor != nil {
-		monitor.Start("initialize network monitor")
-		err := r.networkMonitor.Start()
 		monitor.Finish()
 		if err != nil {
 			return err
@@ -475,14 +488,7 @@ func (r *Router) Start() error {
 		r.geositeCache = nil
 		r.geositeReader = nil
 	}
-	if r.fakeIPStore != nil {
-		monitor.Start("initialize fakeip store")
-		err := r.fakeIPStore.Start()
-		monitor.Finish()
-		if err != nil {
-			return err
-		}
-	}
+
 	if len(r.ruleSets) > 0 {
 		monitor.Start("initialize rule-set")
 		ruleSetStartContext := NewRuleSetStartContext()
@@ -711,6 +717,10 @@ func (r *Router) RuleSet(tag string) (adapter.RuleSet, bool) {
 }
 
 func (r *Router) RouteConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
+	if r.pauseManager.IsDevicePaused() {
+		return E.New("reject connection to ", metadata.Destination, " while device paused")
+	}
+
 	if metadata.InboundDetour != "" {
 		if metadata.LastInbound == metadata.InboundDetour {
 			return E.New("routing loop on detour: ", metadata.InboundDetour)
@@ -835,6 +845,9 @@ func (r *Router) RouteConnection(ctx context.Context, conn net.Conn, metadata ad
 }
 
 func (r *Router) RoutePacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
+	if r.pauseManager.IsDevicePaused() {
+		return E.New("reject packet connection to ", metadata.Destination, " while device paused")
+	}
 	if metadata.InboundDetour != "" {
 		if metadata.LastInbound == metadata.InboundDetour {
 			return E.New("routing loop on detour: ", metadata.InboundDetour)

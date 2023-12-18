@@ -142,7 +142,7 @@ icon: material/alert-decagram
 
 #### inbound
 
-[入站](/zh/configuration/inbound) 标签。
+[入站](/zh/configuration/inbound/) 标签。
 
 #### ip_version
 
@@ -193,6 +193,10 @@ icon: material/alert-decagram
     GeoIP 已废弃且可能在不久的将来移除，参阅 [迁移指南](/zh/migration/#geoip)。
 
 匹配源 GeoIP。
+
+    GeoIP 已废弃且可能在不久的将来移除，参阅 [迁移指南](/zh/migration/#geoip)。
+
+!!! failure "已在 sing-box 1.8.0 废弃"
 
     GeoIP 已废弃且可能在不久的将来移除，参阅 [迁移指南](/zh/migration/#geoip)。
 

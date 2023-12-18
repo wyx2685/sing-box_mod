@@ -27,19 +27,19 @@ require (
 	github.com/sagernet/gomobile v0.1.1
 	github.com/sagernet/gvisor v0.0.0-20231209105102-8d27a30e436e
 	github.com/sagernet/quic-go v0.40.0
-	github.com/sagernet/sing v0.2.20-0.20231212123824-8836b6754226
+	github.com/sagernet/sing v0.3.0-beta.5
 	github.com/sagernet/sing-dns v0.1.11
-	github.com/sagernet/sing-mux v0.1.6-0.20231208180947-9053c29513a2
-	github.com/sagernet/sing-quic v0.1.6-0.20231207143711-eb3cbf9ed054
+	github.com/sagernet/sing-mux v0.1.6-beta.1
+	github.com/sagernet/sing-quic v0.1.6-beta.1
 	github.com/sagernet/sing-shadowsocks v0.2.6
-	github.com/sagernet/sing-shadowsocks2 v0.1.6-0.20231207143709-50439739601a
+	github.com/sagernet/sing-shadowsocks2 v0.1.6-beta.1
 	github.com/sagernet/sing-shadowtls v0.1.4
-	github.com/sagernet/sing-tun v0.1.24-0.20231214063437-b967c6f8376d
+	github.com/sagernet/sing-tun v0.2.0-beta.4
 	github.com/sagernet/sing-vmess v0.1.8
 	github.com/sagernet/smux v0.0.0-20231208180855-7041f6ea79e7
 	github.com/sagernet/tfo-go v0.0.0-20231209031829-7b5343ac1dc6
 	github.com/sagernet/utls v1.5.4
-	github.com/sagernet/wireguard-go v0.0.0-20230807125731-5d4a7ef2dc5f
+	github.com/sagernet/wireguard-go v0.0.0-20231215174105-89dec3b2f3e8
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
@@ -89,7 +89,7 @@ require (
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
+	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect

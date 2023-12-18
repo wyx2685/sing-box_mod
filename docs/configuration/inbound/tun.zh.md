@@ -5,7 +5,6 @@ icon: material/alert-decagram
 !!! quote "sing-box 1.8.0 中的更改"
 
     :material-plus: [gso](#gso)  
-    :material-plus: [gso_max_size](#gso_max_size)  
     :material-alert-decagram: [stack](#stack)
 
 !!! quote ""
@@ -23,7 +22,6 @@ icon: material/alert-decagram
   "inet6_address": "fdfe:dcba:9876::1/126",
   "mtu": 9000,
   "gso": false,
-  "gso_max_size": 65536,
   "auto_route": true,
   "strict_route": true,
   "inet4_route_address": [
@@ -119,18 +117,6 @@ tun 接口的 IPv6 前缀。
     仅支持 Linux。
 
 启用通用分段卸载。
-
-#### gso_max_size
-
-!!! question "自 sing-box 1.8.0 起"
-
-!!! quote ""
-
-    仅支持 Linux。
-
-通用分段卸载包的最大大小。
-
-默认使用 `65536`。
 
 #### auto_route
 

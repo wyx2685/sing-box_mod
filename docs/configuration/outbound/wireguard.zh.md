@@ -5,7 +5,6 @@ icon: material/new-box
 !!! quote "sing-box 1.8.0 中的更改"
 
     :material-plus: [gso](#gso)  
-    :material-plus: [gso_max_size](#gso_max_size)
 
 ### 结构
 
@@ -18,7 +17,6 @@ icon: material/new-box
   "server_port": 1080,
   "system_interface": false,
   "gso": false,
-  "gso_max_size": 65536,
   "interface_name": "wg0",
   "local_address": [
     "10.0.0.2/32"
@@ -70,18 +68,6 @@ icon: material/new-box
     仅支持 Linux。
 
 为系统接口启用通用分段卸载。
-
-#### gso_max_size
-
-!!! question "自 sing-box 1.8.0 起"
-
-!!! quote ""
-
-    仅支持 Linux。
-
-通用分段卸载包的最大大小。
-
-默认使用 `65536`。
 
 #### local_address
 

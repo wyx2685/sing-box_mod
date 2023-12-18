@@ -21,7 +21,6 @@ SFI/SFM/SFT provides an unprivileged TUN implementation through NetworkExtension
 | `inet6_address`               | :material-check:  | /                 |
 | `mtu`                         | :material-check:  | /                 |
 | `gso`                         | :material-close:  | Not implemented   |
-| `gso_max_size`                | :material-close:  | Not implemented   |
 | `auto_route`                  | :material-check:  | /                 |
 | `strict_route`                | :material-close:️ | Not implemented   |
 | `inet4_route_address`         | :material-check:  | /                 |

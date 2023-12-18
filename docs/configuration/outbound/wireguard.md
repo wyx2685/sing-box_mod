@@ -5,7 +5,6 @@ icon: material/new-box
 !!! quote "Changes in sing-box 1.8.0"
     
     :material-plus: [gso](#gso)  
-    :material-plus: [gso_max_size](#gso_max_size)
 
 ### Structure
 
@@ -18,7 +17,6 @@ icon: material/new-box
   "server_port": 1080,
   "system_interface": false,
   "gso": false,
-  "gso_max_size": 65536,
   "interface_name": "wg0",
   "local_address": [
     "10.0.0.2/32"
@@ -82,18 +80,6 @@ Custom interface name for system interface.
     Only supported on Linux.
 
 Enable generic segmentation offload for system interface.
-
-#### gso_max_size
-
-!!! question "Since sing-box 1.8.0"
-
-!!! quote ""
-
-    Only supported on Linux.
-
-Maximum GSO packet size.
-
-`65536` is used by default.
 
 #### local_address
 
@@ -164,4 +150,4 @@ Both is enabled by default.
 
 ### Dial Fields
 
-See [Dial Fields](/configuration/shared/dial) for details.
+See [Dial Fields](/configuration/shared/dial/) for details.
