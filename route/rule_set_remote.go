@@ -128,9 +128,7 @@ func (s *RemoteRuleSet) loadBytes(content []byte) error {
 	switch s.options.Format {
 	case C.RuleSetFormatSource:
 		var compat option.PlainRuleSetCompat
-		decoder := json.NewDecoder(json.NewCommentFilter(bytes.NewReader(content)))
-		decoder.DisallowUnknownFields()
-		err = decoder.Decode(&compat)
+		compat, err = json.UnmarshalExtended[option.PlainRuleSetCompat](content)
 		if err != nil {
 			return err
 		}

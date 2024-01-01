@@ -10,7 +10,7 @@ require (
 	github.com/cloudflare/circl v1.3.6
 	github.com/cretz/bine v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/render v1.0.3
 	github.com/gofrs/uuid/v5 v5.0.0
@@ -26,15 +26,15 @@ require (
 	github.com/sagernet/cloudflare-tls v0.0.0-20231208171750-a4483c1b7cd1
 	github.com/sagernet/gomobile v0.1.1
 	github.com/sagernet/gvisor v0.0.0-20231209105102-8d27a30e436e
-	github.com/sagernet/quic-go v0.40.0
-	github.com/sagernet/sing v0.3.0-beta.5
-	github.com/sagernet/sing-dns v0.1.11
-	github.com/sagernet/sing-mux v0.1.6-beta.1
-	github.com/sagernet/sing-quic v0.1.6-beta.1
+	github.com/sagernet/quic-go v0.40.1-beta.2
+	github.com/sagernet/sing v0.3.0-rc.7
+	github.com/sagernet/sing-dns v0.1.12
+	github.com/sagernet/sing-mux v0.1.8-rc.1
+	github.com/sagernet/sing-quic v0.1.7-rc.2
 	github.com/sagernet/sing-shadowsocks v0.2.6
-	github.com/sagernet/sing-shadowsocks2 v0.1.6-beta.1
+	github.com/sagernet/sing-shadowsocks2 v0.1.6-rc.1
 	github.com/sagernet/sing-shadowtls v0.1.4
-	github.com/sagernet/sing-tun v0.2.0-beta.4
+	github.com/sagernet/sing-tun v0.2.0-rc.1
 	github.com/sagernet/sing-vmess v0.1.8
 	github.com/sagernet/smux v0.0.0-20231208180855-7041f6ea79e7
 	github.com/sagernet/tfo-go v0.0.0-20231209031829-7b5343ac1dc6
@@ -46,12 +46,12 @@ require (
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
 	go.uber.org/zap v1.26.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
 	golang.org/x/sys v0.15.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
-	google.golang.org/grpc v1.59.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/grpc v1.60.1
+	google.golang.org/protobuf v1.32.0
 	howett.net/plist v1.0.1
 )
 
@@ -89,12 +89,12 @@ require (
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
+	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect

@@ -47,10 +47,14 @@ func compileRuleSet(sourcePath string) error {
 			return err
 		}
 	}
-	decoder := json.NewDecoder(json.NewCommentFilter(reader))
-	decoder.DisallowUnknownFields()
-	var plainRuleSet option.PlainRuleSetCompat
-	err = decoder.Decode(&plainRuleSet)
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return err
+	}
+	plainRuleSet, err := json.UnmarshalExtended[option.PlainRuleSetCompat](content)
+	if err != nil {
+		return err
+	}
 	if err != nil {
 		return err
 	}
