@@ -632,7 +632,7 @@ func (r *Router) Close() error {
 	}
 	if r.geoIPReader != nil {
 		monitor.Start("close geoip reader")
-		err = E.Append(err, common.Close(r.geoIPReader), func(err error) error {
+		err = E.Append(err, r.geoIPReader.Close(), func(err error) error {
 			return E.Cause(err, "close geoip reader")
 		})
 		monitor.Finish()
