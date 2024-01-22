@@ -124,6 +124,10 @@ func (c *ReadWaitConn) WaitReadBuffer() (buffer *buf.Buffer, err error) {
 	return
 }
 
+func (c *ReadWaitConn) Upstream() any {
+	return c.Conn
+}
+
 var tlsRegistry []func(conn net.Conn) (loaded bool, tlsReadRecord func() error, tlsHandlePostHandshakeMessage func() error)
 
 func init() {
