@@ -6,51 +6,38 @@ import (
 )
 
 func (h *ShadowsocksMulti) AddUsers(users []option.ShadowsocksUser) error {
-	if cap(h.users)-len(h.users) >= len(users) {
-		h.users = append(h.users, users...)
-	} else {
-		tmp := make([]option.ShadowsocksUser, 0, len(h.users)+len(users)+10)
-		tmp = append(tmp, h.users...)
-		tmp = append(tmp, users...)
-		h.users = tmp
-	}
+	h.users = append(h.users, users...)
+
 	err := h.service.UpdateUsersWithPasswords(common.MapIndexed(h.users, func(index int, user option.ShadowsocksUser) int {
 		return index
 	}), common.Map(h.users, func(user option.ShadowsocksUser) string {
 		return user.Password
 	}))
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
-func (h *ShadowsocksMulti) DelUsers(name []string) error {
-	is := make([]int, 0, len(name))
-	ulen := len(name)
-	for i := range h.users {
-		for _, n := range name {
-			if h.users[i].Name == n {
-				is = append(is, i)
-				ulen--
-			}
-			if ulen == 0 {
-				break
-			}
+func (h *ShadowsocksMulti) DelUsers(names []string) error {
+	toDelete := make(map[string]struct{})
+	for _, name := range names {
+		toDelete[name] = struct{}{}
+	}
+
+	remaining := make([]option.ShadowsocksUser, 0, len(h.users))
+	for _, user := range h.users {
+		if _, found := toDelete[user.Name]; !found {
+			remaining = append(remaining, user)
 		}
 	}
-	ulen = len(h.users)
-	for _, i := range is {
-		h.users[i] = h.users[ulen-1]
-		h.users[ulen-1] = option.ShadowsocksUser{}
-		h.users = h.users[:ulen-1]
-		ulen--
-	}
+
+	h.users = remaining
+
 	err := h.service.UpdateUsersWithPasswords(common.MapIndexed(h.users, func(index int, user option.ShadowsocksUser) int {
 		return index
 	}), common.Map(h.users, func(user option.ShadowsocksUser) string {
 		return user.Password
 	}))
+
 	return err
 }
 
@@ -104,52 +91,48 @@ func (h *Trojan) DelUsers(names []string) error {
 }
 
 func (h *VLESS) AddUsers(users []option.VLESSUser) error {
-	if cap(h.users)-len(h.users) >= len(users) {
-		h.users = append(h.users, users...)
-	} else {
-		tmp := make([]option.VLESSUser, 0, len(h.users)+len(users)+10)
-		tmp = append(tmp, h.users...)
-		tmp = append(tmp, users...)
-		h.users = tmp
-	}
-	h.service.UpdateUsers(common.MapIndexed(h.users, func(index int, it option.VLESSUser) int {
-		return index
-	}), common.Map(h.users, func(it option.VLESSUser) string {
-		return it.UUID
-	}), common.Map(h.users, func(it option.VLESSUser) string {
-		return it.Flow
-	}))
+	h.users = append(h.users, users...)
+
+	h.service.UpdateUsers(
+		common.MapIndexed(h.users, func(index int, it option.VLESSUser) int {
+			return index
+		}),
+		common.Map(h.users, func(it option.VLESSUser) string {
+			return it.UUID
+		}),
+		common.Map(h.users, func(it option.VLESSUser) string {
+			return it.Flow
+		}),
+	)
 	return nil
 }
 
-func (h *VLESS) DelUsers(name []string) error {
-	is := make([]int, 0, len(name))
-	ulen := len(name)
-	for i := range h.users {
-		for _, u := range name {
-			if h.users[i].Name == u {
-				is = append(is, i)
-				ulen--
-			}
-			if ulen == 0 {
-				break
-			}
+func (h *VLESS) DelUsers(names []string) error {
+	toDelete := make(map[string]struct{})
+	for _, name := range names {
+		toDelete[name] = struct{}{}
+	}
+
+	remaining := make([]option.VLESSUser, 0)
+	for _, user := range h.users {
+		if _, found := toDelete[user.Name]; !found {
+			remaining = append(remaining, user)
 		}
 	}
-	ulen = len(h.users)
-	for _, i := range is {
-		h.users[i] = h.users[ulen-1]
-		h.users[ulen-1] = option.VLESSUser{}
-		h.users = h.users[:ulen-1]
-		ulen--
-	}
-	h.service.UpdateUsers(common.MapIndexed(h.users, func(index int, it option.VLESSUser) int {
-		return index
-	}), common.Map(h.users, func(it option.VLESSUser) string {
-		return it.UUID
-	}), common.Map(h.users, func(it option.VLESSUser) string {
-		return it.Flow
-	}))
+
+	h.users = remaining
+
+	h.service.UpdateUsers(
+		common.MapIndexed(h.users, func(index int, it option.VLESSUser) int {
+			return index
+		}),
+		common.Map(h.users, func(it option.VLESSUser) string {
+			return it.UUID
+		}),
+		common.Map(h.users, func(it option.VLESSUser) string {
+			return it.Flow
+		}),
+	)
 	return nil
 }
 
