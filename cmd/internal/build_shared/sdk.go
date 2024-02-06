@@ -85,7 +85,6 @@ var GoBinPath string
 
 func FindMobile() {
 	goBin := filepath.Join(build.Default.GOPATH, "bin")
-	
 	if runtime.GOOS == "windows" {
 		if !rw.FileExists(goBin + "/" + "gobind.exe") {
 			log.Fatal("missing gomobile.exe installation")
