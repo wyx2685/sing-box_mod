@@ -139,7 +139,17 @@ func NewRouter(
 		DisableCache:     dnsOptions.DNSClientOptions.DisableCache,
 		DisableExpire:    dnsOptions.DNSClientOptions.DisableExpire,
 		IndependentCache: dnsOptions.DNSClientOptions.IndependentCache,
-		Logger:           router.dnsLogger,
+		RDRC: func() dns.RDRCStore {
+			cacheFile := service.FromContext[adapter.CacheFile](ctx)
+			if cacheFile == nil {
+				return nil
+			}
+			if !cacheFile.StoreRDRC() {
+				return nil
+			}
+			return cacheFile
+		},
+		Logger: router.dnsLogger,
 	})
 	for i, ruleOptions := range options.Rules {
 		routeRule, err := NewRule(router, router.logger, ruleOptions, true)
@@ -225,7 +235,20 @@ func NewRouter(
 					return nil, E.New("parse dns server[", tag, "]: missing address_resolver")
 				}
 			}
-			transport, err := dns.CreateTransport(tag, ctx, logFactory.NewLogger(F.ToString("dns/transport[", tag, "]")), detour, server.Address)
+			var clientSubnet netip.Addr
+			if server.ClientSubnet != nil {
+				clientSubnet = server.ClientSubnet.Build()
+			} else if dnsOptions.ClientSubnet != nil {
+				clientSubnet = dnsOptions.ClientSubnet.Build()
+			}
+			transport, err := dns.CreateTransport(dns.TransportOptions{
+				Context:      ctx,
+				Logger:       logFactory.NewLogger(F.ToString("dns/transport[", tag, "]")),
+				Name:         tag,
+				Dialer:       detour,
+				Address:      server.Address,
+				ClientSubnet: clientSubnet,
+			})
 			if err != nil {
 				return nil, E.Cause(err, "parse dns server[", tag, "]")
 			}
@@ -265,7 +288,12 @@ func NewRouter(
 	}
 	if defaultTransport == nil {
 		if len(transports) == 0 {
-			transports = append(transports, dns.NewLocalTransport("local", N.SystemDialer))
+			transports = append(transports, common.Must1(dns.CreateTransport(dns.TransportOptions{
+				Context: ctx,
+				Name:    "local",
+				Address: "local",
+				Dialer:  common.Must1(dialer.NewDefault(router, option.DialerOptions{})),
+			})))
 		}
 		defaultTransport = transports[0]
 	}
@@ -418,6 +446,9 @@ func (r *Router) Initialize(inbounds []adapter.Inbound, outbounds []adapter.Outb
 }
 
 func (r *Router) Outbounds() []adapter.Outbound {
+	if !r.started {
+		return nil
+	}
 	return r.outbounds
 }
 
@@ -579,6 +610,11 @@ func (r *Router) Start() error {
 			return E.Cause(err, "initialize rule[", i, "]")
 		}
 	}
+
+	monitor.Start("initialize DNS client")
+	r.dnsClient.Start()
+	monitor.Finish()
+
 	for i, rule := range r.dnsRules {
 		monitor.Start("initialize DNS rule[", i, "]")
 		err := rule.Start()

@@ -59,7 +59,7 @@ func isGeoIPRule(rule option.DefaultRule) bool {
 }
 
 func isGeoIPDNSRule(rule option.DefaultDNSRule) bool {
-	return len(rule.SourceGeoIP) > 0 && common.Any(rule.SourceGeoIP, notPrivateNode)
+	return len(rule.SourceGeoIP) > 0 && common.Any(rule.SourceGeoIP, notPrivateNode) || len(rule.GeoIP) > 0 && common.Any(rule.GeoIP, notPrivateNode)
 }
 
 func isGeositeRule(rule option.DefaultRule) bool {
