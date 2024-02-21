@@ -46,14 +46,16 @@ func (h *Hysteria) DelUsers(names []string) error {
 	return nil
 }
 
-func (h *Hysteria2) AddUsers(users []option.Hysteria2User) error {
-	for _, user := range users {
+func (h *Hysteria2) AddUsers(users []option.Hysteria2User, ids []int) error {
+	for i, user := range users {
 		h.userNameList = append(h.userNameList, user.Password)
+		h.uuidToUid[user.Password] = ids[i]
+		h.uidToUuid[ids[i]] = user.Password
 	}
 
 	indexs := make([]int, len(h.userNameList))
-	for i := range h.userNameList {
-		indexs[i] = i
+	for i, uuid := range h.userNameList {
+		indexs[i] = h.uuidToUid[uuid]
 	}
 
 	h.service.UpdateUsers(indexs, h.userNameList)
@@ -79,8 +81,8 @@ func (h *Hysteria2) DelUsers(names []string) error {
 
 	h.userNameList = remaining
 	indexs := make([]int, len(h.userNameList))
-	for i := range h.userNameList {
-		indexs[i] = i
+	for i, uuid := range h.userNameList {
+		indexs[i] = h.uuidToUid[uuid]
 	}
 	h.service.UpdateUsers(indexs, h.userNameList)
 	return nil
