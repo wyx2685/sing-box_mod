@@ -66,7 +66,14 @@ proto_install:
 release:
 	go run ./cmd/internal/build goreleaser release --clean --skip-publish || exit 1
 	mkdir dist/release
-	mv dist/*.tar.gz dist/*.zip dist/*.deb dist/*.rpm dist/*.pkg.tar.zst dist/release
+	mv dist/*.tar.gz \
+		dist/*.zip \
+		dist/*.deb \
+		dist/*.rpm \
+		dist/*_amd64.pkg.tar.zst \
+		dist/*_amd64v3.pkg.tar.zst \
+		dist/*_arm64.pkg.tar.zst \
+		dist/release
 	ghr --replace --draft --prerelease -p 3 "v${VERSION}" dist/release
 	rm -r dist/release
 
@@ -184,8 +191,8 @@ lib:
 	go run ./cmd/internal/build_libbox -target ios
 
 lib_install:
-	go install -v github.com/sagernet/gomobile/cmd/gomobile@v0.1.1
-	go install -v github.com/sagernet/gomobile/cmd/gobind@v0.1.1
+	go install -v github.com/sagernet/gomobile/cmd/gomobile@v0.1.3
+	go install -v github.com/sagernet/gomobile/cmd/gobind@v0.1.3
 
 docs:
 	mkdocs serve
