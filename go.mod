@@ -27,8 +27,8 @@ require (
 	github.com/sagernet/gomobile v0.1.3
 	github.com/sagernet/gvisor v0.0.0-20240214044702-a3d61928a32f
 	github.com/sagernet/quic-go v0.41.0-beta.2
-	github.com/sagernet/sing v0.3.4-beta.1
-	github.com/sagernet/sing-dns v0.2.0-beta.14
+	github.com/sagernet/sing v0.4.0-beta.3
+	github.com/sagernet/sing-dns v0.2.0-beta.15
 	github.com/sagernet/sing-mux v0.2.0
 	github.com/sagernet/sing-quic v0.1.9-beta.1
 	github.com/sagernet/sing-shadowsocks v0.2.6
@@ -42,16 +42,16 @@ require (
 	github.com/sagernet/wireguard-go v0.0.0-20231215174105-89dec3b2f3e8
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854
 	github.com/spf13/cobra v1.8.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.19.0
-	golang.org/x/net v0.21.0
-	golang.org/x/sys v0.17.0
+	golang.org/x/crypto v0.21.0
+	golang.org/x/net v0.22.0
+	golang.org/x/sys v0.18.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
-	google.golang.org/grpc v1.62.0
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/grpc v1.62.1
+	google.golang.org/protobuf v1.33.0
 	howett.net/plist v1.0.1
 )
 
