@@ -50,9 +50,9 @@ nfpms:
         dst: /etc/sing-box/config.json
         type: config
       - src: release/config/sing-box.service
-        dst: /etc/systemd/system/sing-box.service
+        dst: /usr/lib/systemd/system/sing-box.service
       - src: release/config/sing-box@.service
-        dst: /etc/systemd/system/sing-box@.service
+        dst: /usr/lib/systemd/system/sing-box@.service
       - src: LICENSE
         dst: /usr/share/licenses/sing-box/LICENSE
     conflicts:
@@ -60,6 +60,7 @@ nfpms:
   - id: package_beta
     <<: *template
     package_name: sing-box-beta
+    file_name_template: '{{ .ProjectName }}-beta_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
     formats:
       - deb
       - rpm
@@ -71,10 +72,9 @@ furies:
   - account: sagernet
     ids:
       - package
-    skip: |-
-      {{ eq .Prerelease "" }}
+    skip: "{{ .Prerelease }}"
   - account: sagernet
     ids:
       - package_beta
-    skip: |-
-      {{ ne .Prerelease "" }}
+    skip: "{{ not .Prerelease }}"
+

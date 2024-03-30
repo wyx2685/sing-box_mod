@@ -140,7 +140,7 @@ func (r *abstractDefaultRule) Match(metadata *adapter.InboundContext) bool {
 	}
 
 	if !metadata.DidMatch {
-		return false
+		return true
 	}
 
 	return !r.invert
