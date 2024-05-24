@@ -93,7 +93,7 @@ type DNSRule interface {
 	Rule
 	DisableCache() bool
 	RewriteTTL() *uint32
-	ClientSubnet() *netip.Addr
+	ClientSubnet() *netip.Prefix
 	WithAddressLimit() bool
 	MatchAddressLimit(metadata *InboundContext) bool
 }

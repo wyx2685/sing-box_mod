@@ -7,6 +7,7 @@ import (
 
 	"github.com/sagernet/bbolt"
 	"github.com/sagernet/sing-box/adapter"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 )
@@ -58,12 +59,13 @@ func (c *CacheFile) FakeIPSaveMetadata(metadata *adapter.FakeIPMetadata) error {
 }
 
 func (c *CacheFile) FakeIPSaveMetadataAsync(metadata *adapter.FakeIPMetadata) {
-	if timer := c.saveMetadataTimer; timer != nil {
-		timer.Stop()
+	if c.saveMetadataTimer == nil {
+		c.saveMetadataTimer = time.AfterFunc(C.FakeIPMetadataSaveInterval, func() {
+			_ = c.FakeIPSaveMetadata(metadata)
+		})
+	} else {
+		c.saveMetadataTimer.Reset(C.FakeIPMetadataSaveInterval)
 	}
-	c.saveMetadataTimer = time.AfterFunc(10*time.Second, func() {
-		_ = c.FakeIPSaveMetadata(metadata)
-	})
 }
 
 func (c *CacheFile) FakeIPStore(address netip.Addr, domain string) error {
@@ -72,6 +74,7 @@ func (c *CacheFile) FakeIPStore(address netip.Addr, domain string) error {
 		if err != nil {
 			return err
 		}
+		oldDomain := bucket.Get(address.AsSlice())
 		err = bucket.Put(address.AsSlice(), []byte(domain))
 		if err != nil {
 			return err
@@ -84,12 +87,24 @@ func (c *CacheFile) FakeIPStore(address netip.Addr, domain string) error {
 		if err != nil {
 			return err
 		}
+		if oldDomain != nil {
+			if err := bucket.Delete(oldDomain); err != nil {
+				return err
+			}
+		}
 		return bucket.Put([]byte(domain), address.AsSlice())
 	})
 }
 
 func (c *CacheFile) FakeIPStoreAsync(address netip.Addr, domain string, logger logger.Logger) {
 	c.saveFakeIPAccess.Lock()
+	if oldDomain, loaded := c.saveDomain[address]; loaded {
+		if address.Is4() {
+			delete(c.saveAddress4, oldDomain)
+		} else {
+			delete(c.saveAddress6, oldDomain)
+		}
+	}
 	c.saveDomain[address] = domain
 	if address.Is4() {
 		c.saveAddress4[domain] = address

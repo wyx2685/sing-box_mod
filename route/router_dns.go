@@ -9,7 +9,7 @@ import (
 
 	"github.com/sagernet/sing-box/adapter"
 	C "github.com/sagernet/sing-box/constant"
-	dns "github.com/sagernet/sing-dns"
+	"github.com/sagernet/sing-dns"
 	"github.com/sagernet/sing/common/cache"
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
@@ -65,7 +65,7 @@ func (r *Router) matchDNS(ctx context.Context, allowFakeIP bool, index int) (con
 					ruleIndex += index + 1
 				}
 				r.dnsLogger.DebugContext(ctx, "match[", ruleIndex, "] ", rule.String(), " => ", detour)
-				if (isFakeIP && !r.dnsIndependentCache) || rule.DisableCache() {
+				if isFakeIP || rule.DisableCache() {
 					ctx = dns.ContextWithDisableCache(ctx, true)
 				}
 				if rewriteTTL := rule.RewriteTTL(); rewriteTTL != nil {

@@ -51,7 +51,7 @@ func NewDirect(router adapter.Router, logger log.ContextLogger, tag string, opti
 		domainStrategy: dns.DomainStrategy(options.DomainStrategy),
 		fallbackDelay:  time.Duration(options.FallbackDelay),
 		dialer:         outboundDialer,
-		loopBack:       newLoopBackDetector(),
+		loopBack:       newLoopBackDetector(router),
 	}
 	if options.ProxyProtocol != 0 {
 		return nil, E.New("Proxy Protocol is deprecated and removed in sing-box 1.6.0")
@@ -148,7 +148,7 @@ func (h *Direct) ListenPacket(ctx context.Context, destination M.Socksaddr) (net
 	if err != nil {
 		return nil, err
 	}
-	conn = h.loopBack.NewPacketConn(bufio.NewPacketConn(conn))
+	conn = h.loopBack.NewPacketConn(bufio.NewPacketConn(conn), destination)
 	if originDestination != destination {
 		conn = bufio.NewNATPacketConn(bufio.NewPacketConn(conn), destination, originDestination)
 	}
@@ -156,14 +156,14 @@ func (h *Direct) ListenPacket(ctx context.Context, destination M.Socksaddr) (net
 }
 
 func (h *Direct) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	if h.loopBack.CheckConn(metadata.Source.AddrPort()) {
+	if h.loopBack.CheckConn(metadata.Source.AddrPort(), M.AddrPortFromNet(conn.LocalAddr())) {
 		return E.New("reject loopback connection to ", metadata.Destination)
 	}
 	return NewConnection(ctx, h, conn, metadata)
 }
 
 func (h *Direct) NewPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext) error {
-	if h.loopBack.CheckPacketConn(metadata.Source.AddrPort()) {
+	if h.loopBack.CheckPacketConn(metadata.Source.AddrPort(), M.AddrPortFromNet(conn.LocalAddr())) {
 		return E.New("reject loopback packet connection to ", metadata.Destination)
 	}
 	return NewPacketConnection(ctx, h, conn, metadata)
