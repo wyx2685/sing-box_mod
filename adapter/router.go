@@ -11,15 +11,18 @@ import (
 	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/common/x/list"
 	"github.com/sagernet/sing/service"
 
 	mdns "github.com/miekg/dns"
+	"go4.org/netipx"
 )
 
 type Router interface {
 	Service
 	PreStarter
 	PostStarter
+	Cleanup() error
 
 	Outbounds() []Outbound
 	Outbound(tag string) (Outbound, bool)
@@ -99,12 +102,20 @@ type DNSRule interface {
 }
 
 type RuleSet interface {
+	Name() string
 	StartContext(ctx context.Context, startContext RuleSetStartContext) error
-	PostStart() error
 	Metadata() RuleSetMetadata
+	ExtractIPSet() []*netipx.IPSet
+	IncRef()
+	DecRef()
+	Cleanup()
+	RegisterCallback(callback RuleSetUpdateCallback) *list.Element[RuleSetUpdateCallback]
+	UnregisterCallback(element *list.Element[RuleSetUpdateCallback])
 	Close() error
 	HeadlessRule
 }
+
+type RuleSetUpdateCallback func(it RuleSet)
 
 type RuleSetMetadata struct {
 	ContainsProcessRule bool

@@ -3,6 +3,7 @@ package inbound
 import (
 	"context"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -19,24 +20,34 @@ import (
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ranges"
+	"github.com/sagernet/sing/common/x/list"
+
+	"go4.org/netipx"
 )
 
 var _ adapter.Inbound = (*Tun)(nil)
 
 type Tun struct {
-	tag                    string
-	ctx                    context.Context
-	router                 adapter.Router
-	logger                 log.ContextLogger
-	inboundOptions         option.InboundOptions
-	tunOptions             tun.Options
-	endpointIndependentNat bool
-	udpTimeout             int64
-	stack                  string
-	tunIf                  tun.Tun
-	tunStack               tun.Stack
-	platformInterface      platform.Interface
-	platformOptions        option.TunPlatformOptions
+	tag                         string
+	ctx                         context.Context
+	router                      adapter.Router
+	logger                      log.ContextLogger
+	inboundOptions              option.InboundOptions
+	tunOptions                  tun.Options
+	endpointIndependentNat      bool
+	udpTimeout                  int64
+	stack                       string
+	tunIf                       tun.Tun
+	tunStack                    tun.Stack
+	platformInterface           platform.Interface
+	platformOptions             option.TunPlatformOptions
+	autoRedirect                tun.AutoRedirect
+	routeRuleSet                []adapter.RuleSet
+	routeRuleSetCallback        []*list.Element[adapter.RuleSetUpdateCallback]
+	routeExcludeRuleSet         []adapter.RuleSet
+	routeExcludeRuleSetCallback []*list.Element[adapter.RuleSetUpdateCallback]
+	routeAddressSet             []*netipx.IPSet
+	routeExcludeAddressSet      []*netipx.IPSet
 }
 
 func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TunInboundOptions, platformInterface platform.Interface) (*Tun, error) {
@@ -50,9 +61,9 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
+	var err error
 	includeUID := uidToRange(options.IncludeUID)
 	if len(options.IncludeUIDRange) > 0 {
-		var err error
 		includeUID, err = parseRange(includeUID, options.IncludeUIDRange)
 		if err != nil {
 			return nil, E.Cause(err, "parse include_uid_range")
@@ -60,13 +71,13 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 	}
 	excludeUID := uidToRange(options.ExcludeUID)
 	if len(options.ExcludeUIDRange) > 0 {
-		var err error
 		excludeUID, err = parseRange(excludeUID, options.ExcludeUIDRange)
 		if err != nil {
 			return nil, E.Cause(err, "parse exclude_uid_range")
 		}
 	}
-	return &Tun{
+
+	inbound := &Tun{
 		tag:            tag,
 		ctx:            ctx,
 		router:         router,
@@ -79,6 +90,7 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 			Inet4Address:             options.Inet4Address,
 			Inet6Address:             options.Inet6Address,
 			AutoRoute:                options.AutoRoute,
+			AutoRedirect:             options.AutoRedirect,
 			StrictRoute:              options.StrictRoute,
 			IncludeInterface:         options.IncludeInterface,
 			ExcludeInterface:         options.ExcludeInterface,
@@ -99,7 +111,43 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 		stack:                  options.Stack,
 		platformInterface:      platformInterface,
 		platformOptions:        common.PtrValueOrDefault(options.Platform),
-	}, nil
+	}
+	if options.AutoRedirect {
+		if !options.AutoRoute {
+			return nil, E.New("`auto_route` is required by `auto_redirect`")
+		}
+		disableNFTables, dErr := strconv.ParseBool(os.Getenv("DISABLE_NFTABLES"))
+		inbound.autoRedirect, err = tun.NewAutoRedirect(tun.AutoRedirectOptions{
+			TunOptions:             &inbound.tunOptions,
+			Context:                ctx,
+			Handler:                inbound,
+			Logger:                 logger,
+			TableName:              "sing-box",
+			DisableNFTables:        dErr == nil && disableNFTables,
+			RouteAddressSet:        &inbound.routeAddressSet,
+			RouteExcludeAddressSet: &inbound.routeExcludeAddressSet,
+		})
+		if err != nil {
+			return nil, E.Cause(err, "initialize auto-redirect")
+		}
+		for _, routeAddressSet := range options.RouteAddressSet {
+			ruleSet, loaded := router.RuleSet(routeAddressSet)
+			if !loaded {
+				return nil, E.New("parse route_address_set: rule-set not found: ", routeAddressSet)
+			}
+			ruleSet.IncRef()
+			inbound.routeRuleSet = append(inbound.routeRuleSet, ruleSet)
+		}
+		for _, routeExcludeAddressSet := range options.RouteExcludeAddressSet {
+			ruleSet, loaded := router.RuleSet(routeExcludeAddressSet)
+			if !loaded {
+				return nil, E.New("parse route_exclude_address_set: rule-set not found: ", routeExcludeAddressSet)
+			}
+			ruleSet.IncRef()
+			inbound.routeExcludeRuleSet = append(inbound.routeExcludeRuleSet, ruleSet)
+		}
+	}
+	return inbound, nil
 }
 
 func uidToRange(uidList option.Listable[uint32]) []ranges.Range[uint32] {
@@ -199,10 +247,47 @@ func (t *Tun) Start() error {
 	return nil
 }
 
+func (t *Tun) PostStart() error {
+	monitor := taskmonitor.New(t.logger, C.StartTimeout)
+	if t.autoRedirect != nil {
+		t.routeAddressSet = common.FlatMap(t.routeRuleSet, adapter.RuleSet.ExtractIPSet)
+		t.routeExcludeAddressSet = common.FlatMap(t.routeExcludeRuleSet, adapter.RuleSet.ExtractIPSet)
+		monitor.Start("initiating auto-redirect")
+		err := t.autoRedirect.Start()
+		monitor.Finish()
+		if err != nil {
+			return E.Cause(err, "auto-redirect")
+		}
+		for _, routeRuleSet := range t.routeRuleSet {
+			t.routeRuleSetCallback = append(t.routeRuleSetCallback, routeRuleSet.RegisterCallback(t.updateRouteAddressSet))
+			routeRuleSet.DecRef()
+		}
+		for _, routeExcludeRuleSet := range t.routeExcludeRuleSet {
+			t.routeExcludeRuleSetCallback = append(t.routeExcludeRuleSetCallback, routeExcludeRuleSet.RegisterCallback(t.updateRouteAddressSet))
+			routeExcludeRuleSet.DecRef()
+		}
+		t.routeAddressSet = nil
+		t.routeExcludeAddressSet = nil
+	}
+	return nil
+}
+
+func (t *Tun) updateRouteAddressSet(it adapter.RuleSet) {
+	t.routeAddressSet = common.FlatMap(t.routeRuleSet, adapter.RuleSet.ExtractIPSet)
+	t.routeExcludeAddressSet = common.FlatMap(t.routeExcludeRuleSet, adapter.RuleSet.ExtractIPSet)
+	err := t.autoRedirect.UpdateRouteAddressSet()
+	if err != nil {
+		t.logger.Error("update route address set ", it.Name(), ": ", err)
+	}
+	t.routeAddressSet = nil
+	t.routeExcludeAddressSet = nil
+}
+
 func (t *Tun) Close() error {
 	return common.Close(
 		t.tunStack,
 		t.tunIf,
+		t.autoRedirect,
 	)
 }
 
@@ -214,7 +299,11 @@ func (t *Tun) NewConnection(ctx context.Context, conn net.Conn, upstreamMetadata
 	metadata.Source = upstreamMetadata.Source
 	metadata.Destination = upstreamMetadata.Destination
 	metadata.InboundOptions = t.inboundOptions
-	t.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
+	if upstreamMetadata.Protocol != "" {
+		t.logger.InfoContext(ctx, "inbound ", upstreamMetadata.Protocol, " connection from ", metadata.Source)
+	} else {
+		t.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
+	}
 	t.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	err := t.router.RouteConnection(ctx, conn, metadata)
 	if err != nil {
