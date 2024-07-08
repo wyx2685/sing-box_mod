@@ -3,7 +3,9 @@ package inbound
 import (
 	"context"
 	"net"
+	"net/netip"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -51,6 +53,60 @@ type Tun struct {
 }
 
 func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TunInboundOptions, platformInterface platform.Interface) (*Tun, error) {
+	address := options.Address
+	//nolint:staticcheck
+	//goland:noinspection GoDeprecation
+	if len(options.Inet4Address) > 0 {
+		address = append(address, options.Inet4Address...)
+	}
+	//nolint:staticcheck
+	//goland:noinspection GoDeprecation
+	if len(options.Inet6Address) > 0 {
+		address = append(address, options.Inet6Address...)
+	}
+	inet4Address := common.Filter(address, func(it netip.Prefix) bool {
+		return it.Addr().Is4()
+	})
+	inet6Address := common.Filter(address, func(it netip.Prefix) bool {
+		return it.Addr().Is6()
+	})
+
+	routeAddress := options.RouteAddress
+	//nolint:staticcheck
+	//goland:noinspection GoDeprecation
+	if len(options.Inet4RouteAddress) > 0 {
+		routeAddress = append(routeAddress, options.Inet4RouteAddress...)
+	}
+	//nolint:staticcheck
+	//goland:noinspection GoDeprecation
+	if len(options.Inet6RouteAddress) > 0 {
+		routeAddress = append(routeAddress, options.Inet6RouteAddress...)
+	}
+	inet4RouteAddress := common.Filter(routeAddress, func(it netip.Prefix) bool {
+		return it.Addr().Is4()
+	})
+	inet6RouteAddress := common.Filter(routeAddress, func(it netip.Prefix) bool {
+		return it.Addr().Is6()
+	})
+
+	routeExcludeAddress := options.RouteExcludeAddress
+	//nolint:staticcheck
+	//goland:noinspection GoDeprecation
+	if len(options.Inet4RouteExcludeAddress) > 0 {
+		routeExcludeAddress = append(routeExcludeAddress, options.Inet4RouteExcludeAddress...)
+	}
+	//nolint:staticcheck
+	//goland:noinspection GoDeprecation
+	if len(options.Inet6RouteExcludeAddress) > 0 {
+		routeExcludeAddress = append(routeExcludeAddress, options.Inet6RouteExcludeAddress...)
+	}
+	inet4RouteExcludeAddress := common.Filter(routeExcludeAddress, func(it netip.Prefix) bool {
+		return it.Addr().Is4()
+	})
+	inet6RouteExcludeAddress := common.Filter(routeExcludeAddress, func(it netip.Prefix) bool {
+		return it.Addr().Is6()
+	})
+
 	tunMTU := options.MTU
 	if tunMTU == 0 {
 		tunMTU = 9000
@@ -77,6 +133,23 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 		}
 	}
 
+	tableIndex := options.IPRoute2TableIndex
+	if tableIndex == 0 {
+		tableIndex = tun.DefaultIPRoute2TableIndex
+	}
+	ruleIndex := options.IPRoute2RuleIndex
+	if ruleIndex == 0 {
+		ruleIndex = tun.DefaultIPRoute2RuleIndex
+	}
+	inputMark := uint32(options.AutoRedirectInputMark)
+	if inputMark == 0 {
+		inputMark = tun.DefaultAutoRedirectInputMark
+	}
+	outputMark := uint32(options.AutoRedirectOutputMark)
+	if outputMark == 0 {
+		outputMark = tun.DefaultAutoRedirectOutputMark
+	}
+
 	inbound := &Tun{
 		tag:            tag,
 		ctx:            ctx,
@@ -87,24 +160,26 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 			Name:                     options.InterfaceName,
 			MTU:                      tunMTU,
 			GSO:                      options.GSO,
-			Inet4Address:             options.Inet4Address,
-			Inet6Address:             options.Inet6Address,
+			Inet4Address:             inet4Address,
+			Inet6Address:             inet6Address,
 			AutoRoute:                options.AutoRoute,
-			AutoRedirect:             options.AutoRedirect,
+			IPRoute2TableIndex:       tableIndex,
+			IPRoute2RuleIndex:        ruleIndex,
+			AutoRedirectInputMark:    inputMark,
+			AutoRedirectOutputMark:   outputMark,
 			StrictRoute:              options.StrictRoute,
 			IncludeInterface:         options.IncludeInterface,
 			ExcludeInterface:         options.ExcludeInterface,
-			Inet4RouteAddress:        options.Inet4RouteAddress,
-			Inet6RouteAddress:        options.Inet6RouteAddress,
-			Inet4RouteExcludeAddress: options.Inet4RouteExcludeAddress,
-			Inet6RouteExcludeAddress: options.Inet6RouteExcludeAddress,
+			Inet4RouteAddress:        inet4RouteAddress,
+			Inet6RouteAddress:        inet6RouteAddress,
+			Inet4RouteExcludeAddress: inet4RouteExcludeAddress,
+			Inet6RouteExcludeAddress: inet6RouteExcludeAddress,
 			IncludeUID:               includeUID,
 			ExcludeUID:               excludeUID,
 			IncludeAndroidUser:       options.IncludeAndroidUser,
 			IncludePackage:           options.IncludePackage,
 			ExcludePackage:           options.ExcludePackage,
 			InterfaceMonitor:         router.InterfaceMonitor(),
-			TableIndex:               2022,
 		},
 		endpointIndependentNat: options.EndpointIndependentNat,
 		udpTimeout:             int64(udpTimeout.Seconds()),
@@ -122,6 +197,8 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 			Context:                ctx,
 			Handler:                inbound,
 			Logger:                 logger,
+			NetworkMonitor:         router.NetworkMonitor(),
+			InterfaceFinder:        router.InterfaceFinder(),
 			TableName:              "sing-box",
 			DisableNFTables:        dErr == nil && disableNFTables,
 			RouteAddressSet:        &inbound.routeAddressSet,
@@ -130,21 +207,33 @@ func NewTun(ctx context.Context, router adapter.Router, logger log.ContextLogger
 		if err != nil {
 			return nil, E.Cause(err, "initialize auto-redirect")
 		}
-		for _, routeAddressSet := range options.RouteAddressSet {
-			ruleSet, loaded := router.RuleSet(routeAddressSet)
-			if !loaded {
-				return nil, E.New("parse route_address_set: rule-set not found: ", routeAddressSet)
+		if runtime.GOOS != "android" {
+			var markMode bool
+			for _, routeAddressSet := range options.RouteAddressSet {
+				ruleSet, loaded := router.RuleSet(routeAddressSet)
+				if !loaded {
+					return nil, E.New("parse route_address_set: rule-set not found: ", routeAddressSet)
+				}
+				ruleSet.IncRef()
+				inbound.routeRuleSet = append(inbound.routeRuleSet, ruleSet)
+				markMode = true
 			}
-			ruleSet.IncRef()
-			inbound.routeRuleSet = append(inbound.routeRuleSet, ruleSet)
-		}
-		for _, routeExcludeAddressSet := range options.RouteExcludeAddressSet {
-			ruleSet, loaded := router.RuleSet(routeExcludeAddressSet)
-			if !loaded {
-				return nil, E.New("parse route_exclude_address_set: rule-set not found: ", routeExcludeAddressSet)
+			for _, routeExcludeAddressSet := range options.RouteExcludeAddressSet {
+				ruleSet, loaded := router.RuleSet(routeExcludeAddressSet)
+				if !loaded {
+					return nil, E.New("parse route_exclude_address_set: rule-set not found: ", routeExcludeAddressSet)
+				}
+				ruleSet.IncRef()
+				inbound.routeExcludeRuleSet = append(inbound.routeExcludeRuleSet, ruleSet)
+				markMode = true
 			}
-			ruleSet.IncRef()
-			inbound.routeExcludeRuleSet = append(inbound.routeExcludeRuleSet, ruleSet)
+			if markMode {
+				inbound.tunOptions.AutoRedirectMarkMode = true
+				err = router.RegisterAutoRedirectOutputMark(inbound.tunOptions.AutoRedirectOutputMark)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 	return inbound, nil
@@ -169,11 +258,11 @@ func parseRange(uidRanges []ranges.Range[uint32], rangeList []string) ([]ranges.
 		}
 		var start, end uint64
 		var err error
-		start, err = strconv.ParseUint(uidRange[:subIndex], 10, 32)
+		start, err = strconv.ParseUint(uidRange[:subIndex], 0, 32)
 		if err != nil {
 			return nil, E.Cause(err, "parse range start")
 		}
-		end, err = strconv.ParseUint(uidRange[subIndex+1:], 10, 32)
+		end, err = strconv.ParseUint(uidRange[subIndex+1:], 0, 32)
 		if err != nil {
 			return nil, E.Cause(err, "parse range end")
 		}
@@ -222,7 +311,7 @@ func (t *Tun) Start() error {
 		forwarderBindInterface = true
 		includeAllNetworks = t.platformInterface.IncludeAllNetworks()
 	}
-	t.tunStack, err = tun.NewStack(t.stack, tun.StackOptions{
+	tunStack, err := tun.NewStack(t.stack, tun.StackOptions{
 		Context:                t.ctx,
 		Tun:                    tunInterface,
 		TunOptions:             t.tunOptions,
@@ -238,8 +327,9 @@ func (t *Tun) Start() error {
 		return err
 	}
 	monitor.Start("initiating tun stack")
-	err = t.tunStack.Start()
+	err = tunStack.Start()
 	monitor.Finish()
+	t.tunStack = tunStack
 	if err != nil {
 		return err
 	}
@@ -251,8 +341,22 @@ func (t *Tun) PostStart() error {
 	monitor := taskmonitor.New(t.logger, C.StartTimeout)
 	if t.autoRedirect != nil {
 		t.routeAddressSet = common.FlatMap(t.routeRuleSet, adapter.RuleSet.ExtractIPSet)
+		for _, routeRuleSet := range t.routeRuleSet {
+			ipSets := routeRuleSet.ExtractIPSet()
+			if len(ipSets) == 0 {
+				t.logger.Warn("route_address_set: no destination IP CIDR rules found in rule-set: ", routeRuleSet.Name())
+			}
+			t.routeAddressSet = append(t.routeAddressSet, ipSets...)
+		}
 		t.routeExcludeAddressSet = common.FlatMap(t.routeExcludeRuleSet, adapter.RuleSet.ExtractIPSet)
-		monitor.Start("initiating auto-redirect")
+		for _, routeExcludeRuleSet := range t.routeExcludeRuleSet {
+			ipSets := routeExcludeRuleSet.ExtractIPSet()
+			if len(ipSets) == 0 {
+				t.logger.Warn("route_address_set: no destination IP CIDR rules found in rule-set: ", routeExcludeRuleSet.Name())
+			}
+			t.routeExcludeAddressSet = append(t.routeExcludeAddressSet, ipSets...)
+		}
+		monitor.Start("initialize auto-redirect")
 		err := t.autoRedirect.Start()
 		monitor.Finish()
 		if err != nil {
@@ -275,10 +379,7 @@ func (t *Tun) PostStart() error {
 func (t *Tun) updateRouteAddressSet(it adapter.RuleSet) {
 	t.routeAddressSet = common.FlatMap(t.routeRuleSet, adapter.RuleSet.ExtractIPSet)
 	t.routeExcludeAddressSet = common.FlatMap(t.routeExcludeRuleSet, adapter.RuleSet.ExtractIPSet)
-	err := t.autoRedirect.UpdateRouteAddressSet()
-	if err != nil {
-		t.logger.Error("update route address set ", it.Name(), ": ", err)
-	}
+	t.autoRedirect.UpdateRouteAddressSet()
 	t.routeAddressSet = nil
 	t.routeExcludeAddressSet = nil
 }

@@ -49,7 +49,9 @@ type Router interface {
 	DefaultInterface() string
 	AutoDetectInterface() bool
 	AutoDetectInterfaceFunc() control.Func
-	DefaultMark() int
+	DefaultMark() uint32
+	RegisterAutoRedirectOutputMark(mark uint32) error
+	AutoRedirectOutputMark() uint32
 	NetworkMonitor() tun.NetworkUpdateMonitor
 	InterfaceMonitor() tun.DefaultInterfaceMonitor
 	PackageManager() tun.PackageManager
@@ -104,6 +106,7 @@ type DNSRule interface {
 type RuleSet interface {
 	Name() string
 	StartContext(ctx context.Context, startContext RuleSetStartContext) error
+	PostStart() error
 	Metadata() RuleSetMetadata
 	ExtractIPSet() []*netipx.IPSet
 	IncRef()

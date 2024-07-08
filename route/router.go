@@ -84,7 +84,8 @@ type Router struct {
 	interfaceFinder                    *control.DefaultInterfaceFinder
 	autoDetectInterface                bool
 	defaultInterface                   string
-	defaultMark                        int
+	defaultMark                        uint32
+	autoRedirectOutputMark             uint32
 	networkMonitor                     tun.NetworkUpdateMonitor
 	interfaceMonitor                   tun.DefaultInterfaceMonitor
 	packageManager                     tun.PackageManager
@@ -538,7 +539,10 @@ func (r *Router) Start() error {
 
 	if r.needPackageManager && r.platformInterface == nil {
 		monitor.Start("initialize package manager")
-		packageManager, err := tun.NewPackageManager(r)
+		packageManager, err := tun.NewPackageManager(tun.PackageManagerOptions{
+			Callback: r,
+			Logger:   r.logger,
+		})
 		monitor.Finish()
 		if err != nil {
 			return E.Cause(err, "create package manager")
@@ -727,6 +731,14 @@ func (r *Router) PostStart() error {
 		monitor.Finish()
 		if err != nil {
 			return E.Cause(err, "initialize rule[", i, "]")
+		}
+	}
+	for _, ruleSet := range r.ruleSets {
+		monitor.Start("post start rule_set[", ruleSet.Name(), "]")
+		err := ruleSet.PostStart()
+		monitor.Finish()
+		if err != nil {
+			return E.Cause(err, "post start rule_set[", ruleSet.Name(), "]")
 		}
 	}
 	r.started = true
@@ -979,6 +991,7 @@ func (r *Router) RoutePacketConnection(ctx context.Context, conn N.PacketConn, m
 				sniff.STUNMessage,
 				sniff.UTP,
 				sniff.UDPTracker,
+				sniff.DTLSRecord,
 			)
 			if sniffMetadata != nil {
 				metadata.Protocol = sniffMetadata.Protocol
@@ -1144,11 +1157,23 @@ func (r *Router) AutoDetectInterfaceFunc() control.Func {
 	}
 }
 
+func (r *Router) RegisterAutoRedirectOutputMark(mark uint32) error {
+	if r.autoRedirectOutputMark > 0 {
+		return E.New("only one auto-redirect can be configured")
+	}
+	r.autoRedirectOutputMark = mark
+	return nil
+}
+
+func (r *Router) AutoRedirectOutputMark() uint32 {
+	return r.autoRedirectOutputMark
+}
+
 func (r *Router) DefaultInterface() string {
 	return r.defaultInterface
 }
 
-func (r *Router) DefaultMark() int {
+func (r *Router) DefaultMark() uint32 {
 	return r.defaultMark
 }
 

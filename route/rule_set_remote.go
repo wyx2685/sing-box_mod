@@ -112,6 +112,10 @@ func (s *RemoteRuleSet) StartContext(ctx context.Context, startContext adapter.R
 		}
 	}
 	s.updateTicker = time.NewTicker(s.updateInterval)
+	return nil
+}
+
+func (s *RemoteRuleSet) PostStart() error {
 	go s.loopUpdate()
 	return nil
 }
@@ -164,14 +168,17 @@ func (s *RemoteRuleSet) loadBytes(content []byte) error {
 		if err != nil {
 			return err
 		}
-		plainRuleSet = compat.Upgrade()
+		plainRuleSet, err = compat.Upgrade()
+		if err != nil {
+			return err
+		}
 	case C.RuleSetFormatBinary:
 		plainRuleSet, err = srs.Read(bytes.NewReader(content), false)
 		if err != nil {
 			return err
 		}
 	default:
-		return E.New("unknown rule set format: ", s.options.Format)
+		return E.New("unknown rule-set format: ", s.options.Format)
 	}
 	rules := make([]adapter.HeadlessRule, len(plainRuleSet.Rules))
 	for i, ruleOptions := range plainRuleSet.Rules {
@@ -190,10 +197,6 @@ func (s *RemoteRuleSet) loadBytes(content []byte) error {
 	for _, callback := range callbacks {
 		callback(s)
 	}
-	if s.refs.Load() == 0 {
-		s.rules = nil
-		runtime.GC()
-	}
 	return nil
 }
 
@@ -202,6 +205,8 @@ func (s *RemoteRuleSet) loopUpdate() {
 		err := s.fetchOnce(s.ctx, nil)
 		if err != nil {
 			s.logger.Error("fetch rule-set ", s.options.Tag, ": ", err)
+		} else if s.refs.Load() == 0 {
+			s.rules = nil
 		}
 	}
 	for {
@@ -214,6 +219,8 @@ func (s *RemoteRuleSet) loopUpdate() {
 			err := s.fetchOnce(s.ctx, nil)
 			if err != nil {
 				s.logger.Error("fetch rule-set ", s.options.Tag, ": ", err)
+			} else if s.refs.Load() == 0 {
+				s.rules = nil
 			}
 		}
 	}
