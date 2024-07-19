@@ -27,7 +27,7 @@ require (
 	github.com/sagernet/gomobile v0.1.3
 	github.com/sagernet/gvisor v0.0.0-20240428053021-e691de28565f
 	github.com/sagernet/quic-go v0.45.1-beta.2
-	github.com/sagernet/sing v0.5.0-alpha.12
+	github.com/sagernet/sing v0.5.0-alpha.12.0.20240717075530-332e47007567
 	github.com/sagernet/sing-dns v0.3.0-beta.10
 	github.com/sagernet/sing-mux v0.2.0
 	github.com/sagernet/sing-quic v0.2.0-beta.12
