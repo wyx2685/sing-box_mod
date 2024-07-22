@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/mux"
@@ -14,7 +15,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/transport/v2ray"
 	"github.com/sagernet/sing-box/transport/vless"
-	"github.com/sagernet/sing-vmess"
+	vmess "github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing-vmess/packetaddr"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/auth"
@@ -138,6 +139,10 @@ func (h *VLESS) NewConnection(ctx context.Context, conn net.Conn, metadata adapt
 	if h.tlsConfig != nil && h.transport == nil {
 		conn, err = tls.ServerHandshake(ctx, conn, h.tlsConfig)
 		if err != nil {
+			if strings.Contains(err.Error(), "REALITY: processed invalid connection") {
+				h.logger.DebugContext(ctx, err)
+				return nil
+			}
 			return err
 		}
 	}
