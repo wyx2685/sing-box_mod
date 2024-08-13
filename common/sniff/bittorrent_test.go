@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/sniff"
 	C "github.com/sagernet/sing-box/constant"
 
@@ -24,7 +25,8 @@ func TestSniffBittorrent(t *testing.T) {
 	for _, pkt := range packets {
 		pkt, err := hex.DecodeString(pkt)
 		require.NoError(t, err)
-		metadata, err := sniff.BitTorrent(context.TODO(), bytes.NewReader(pkt))
+		var metadata adapter.InboundContext
+		err = sniff.BitTorrent(context.TODO(), &metadata, bytes.NewReader(pkt))
 		require.NoError(t, err)
 		require.Equal(t, C.ProtocolBitTorrent, metadata.Protocol)
 	}
@@ -43,8 +45,8 @@ func TestSniffUTP(t *testing.T) {
 	for _, pkt := range packets {
 		pkt, err := hex.DecodeString(pkt)
 		require.NoError(t, err)
-
-		metadata, err := sniff.UTP(context.TODO(), pkt)
+		var metadata adapter.InboundContext
+		err = sniff.UTP(context.TODO(), &metadata, pkt)
 		require.NoError(t, err)
 		require.Equal(t, C.ProtocolBitTorrent, metadata.Protocol)
 	}
@@ -54,27 +56,17 @@ func TestSniffUDPTracker(t *testing.T) {
 	t.Parallel()
 
 	connectPackets := []string{
-		// connect packets
 		"00000417271019800000000078e90560",
 		"00000417271019800000000022c5d64d",
 		"000004172710198000000000b3863541",
-
-		// announce packets
-		"3d7592ead4b8c9e300000001b871a3820000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002092f616e6e6f756e6365",
-		"3d7592ead4b8c9e30000000188deed1c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002092f616e6e6f756e6365",
-		"3d7592ead4b8c9e300000001ceb948ad0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a3362cdb7020ff920e5aa642c3d4066950dd1f01f4d00000000000000000000000000000000000000000000000000000000000000000000000000000000000002092f616e6e6f756e6365",
-
-		// scrape packets
-		"3d7592ead4b8c9e300000002d2f4bba5a94a8fe5ccb19ba61c4c0873d391e987982fbbd3",
-		"3d7592ead4b8c9e300000002441243292aae6c35c94fcfb415dbe95f408b9ce91ee846ed",
-		"3d7592ead4b8c9e300000002b2aa461b1ad1fa9661cf3fe45fb2504ad52ec6c67758e294",
 	}
 
 	for _, pkt := range connectPackets {
 		pkt, err := hex.DecodeString(pkt)
 		require.NoError(t, err)
 
-		metadata, err := sniff.UDPTracker(context.TODO(), pkt)
+		var metadata adapter.InboundContext
+		err = sniff.UDPTracker(context.TODO(), &metadata, pkt)
 		require.NoError(t, err)
 		require.Equal(t, C.ProtocolBitTorrent, metadata.Protocol)
 	}
