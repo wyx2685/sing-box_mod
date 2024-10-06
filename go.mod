@@ -1,8 +1,8 @@
 module github.com/sagernet/sing-box
 
-go 1.22
+go 1.23
 
-toolchain go1.22.0
+toolchain go1.23.2
 
 require (
 	berty.tech/go-libtor v1.0.385
@@ -25,28 +25,28 @@ require (
 	github.com/sagernet/cloudflare-tls v0.0.0-20231208171750-a4483c1b7cd1
 	github.com/sagernet/cors v1.2.1
 	github.com/sagernet/fswatch v0.1.1
-	github.com/sagernet/gomobile v0.1.3
+	github.com/sagernet/gomobile v0.1.4
 	github.com/sagernet/gvisor v0.0.0-20240428053021-e691de28565f
 	github.com/sagernet/quic-go v0.47.0-beta.2
-	github.com/sagernet/sing v0.5.0-beta.1
+	github.com/sagernet/sing v0.5.0-beta.2
 	github.com/sagernet/sing-dns v0.3.0-beta.14
 	github.com/sagernet/sing-mux v0.2.0
 	github.com/sagernet/sing-quic v0.3.0-beta.3
 	github.com/sagernet/sing-shadowsocks v0.2.7
 	github.com/sagernet/sing-shadowsocks2 v0.2.0
 	github.com/sagernet/sing-shadowtls v0.1.4
-	github.com/sagernet/sing-tun v0.4.0-beta.13.0.20240703164908-1f043289199d
+	github.com/sagernet/sing-tun v0.4.0-beta.16
 	github.com/sagernet/sing-vmess v0.1.12
 	github.com/sagernet/smux v0.0.0-20231208180855-7041f6ea79e7
-	github.com/sagernet/utls v1.5.4
+	github.com/sagernet/utls v1.6.7
 	github.com/sagernet/wireguard-go v0.0.0-20231215174105-89dec3b2f3e8
 	github.com/sagernet/ws v0.0.0-20231204124109-acfe8907c854
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
-	github.com/xtls/reality v0.0.0-20240712055506-48f0b2d5ed6d
+	github.com/xtls/reality v0.0.0-20240909153216-e26ae2305463
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.26.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/net v0.27.0
 	golang.org/x/sys v0.25.0
@@ -63,7 +63,6 @@ require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
