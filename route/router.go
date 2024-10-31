@@ -158,14 +158,14 @@ func NewRouter(
 		Logger: router.dnsLogger,
 	})
 	for i, ruleOptions := range options.Rules {
-		routeRule, err := NewRule(router, router.logger, ruleOptions, true)
+		routeRule, err := NewRule(ctx, router, router.logger, ruleOptions, true)
 		if err != nil {
 			return nil, E.Cause(err, "parse rule[", i, "]")
 		}
 		router.rules = append(router.rules, routeRule)
 	}
 	for i, dnsRuleOptions := range dnsOptions.Rules {
-		dnsRule, err := NewDNSRule(router, router.logger, dnsRuleOptions, true)
+		dnsRule, err := NewDNSRule(ctx, router, router.logger, dnsRuleOptions, true)
 		if err != nil {
 			return nil, E.Cause(err, "parse dns rule[", i, "]")
 		}
@@ -343,6 +343,7 @@ func NewRouter(
 				_ = router.interfaceFinder.Update()
 			})
 			interfaceMonitor, err := tun.NewDefaultInterfaceMonitor(router.networkMonitor, router.logger, tun.DefaultInterfaceMonitorOptions{
+				InterfaceFinder:       router.interfaceFinder,
 				OverrideAndroidVPN:    options.OverrideAndroidVPN,
 				UnderNetworkExtension: platformInterface != nil && platformInterface.UnderNetworkExtension(),
 			})
@@ -663,14 +664,15 @@ func (r *Router) Close() error {
 
 func (r *Router) PostStart() error {
 	monitor := taskmonitor.New(r.logger, C.StopTimeout)
+	var cacheContext *adapter.HTTPStartContext
 	if len(r.ruleSets) > 0 {
 		monitor.Start("initialize rule-set")
-		ruleSetStartContext := NewRuleSetStartContext()
+		cacheContext = adapter.NewHTTPStartContext()
 		var ruleSetStartGroup task.Group
 		for i, ruleSet := range r.ruleSets {
 			ruleSetInPlace := ruleSet
 			ruleSetStartGroup.Append0(func(ctx context.Context) error {
-				err := ruleSetInPlace.StartContext(ctx, ruleSetStartContext)
+				err := ruleSetInPlace.StartContext(ctx, cacheContext)
 				if err != nil {
 					return E.Cause(err, "initialize rule-set[", i, "]")
 				}
@@ -684,7 +686,9 @@ func (r *Router) PostStart() error {
 		if err != nil {
 			return err
 		}
-		ruleSetStartContext.Close()
+	}
+	if cacheContext != nil {
+		cacheContext.Close()
 	}
 	needFindProcess := r.needFindProcess
 	needWIFIState := r.needWIFIState
@@ -1026,16 +1030,14 @@ func (r *Router) RoutePacketConnection(ctx context.Context, conn N.PacketConn, m
 						)
 					} else {
 						err = sniff.PeekPacket(
-							ctx,
-							&metadata,
+							ctx, &metadata,
 							buffer.Bytes(),
 							sniff.DomainNameQuery,
 							sniff.QUICClientHello,
 							sniff.STUNMessage,
 							sniff.UTP,
 							sniff.UDPTracker,
-							sniff.DTLSRecord,
-						)
+							sniff.DTLSRecord)
 					}
 					if E.IsMulti(err, sniff.ErrClientHelloFragmented) && len(bufferList) == 0 {
 						bufferList = append(bufferList, buffer)

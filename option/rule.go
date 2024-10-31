@@ -104,22 +104,6 @@ type _DefaultRule struct {
 	Deprecated_RulesetIPCIDRMatchSource bool `json:"rule_set_ipcidr_match_source,omitempty"`
 }
 
-type DefaultRule _DefaultRule
-
-func (r *DefaultRule) UnmarshalJSON(bytes []byte) error {
-	err := json.Unmarshal(bytes, (*_DefaultRule)(r))
-	if err != nil {
-		return err
-	}
-	//nolint:staticcheck
-	//goland:noinspection GoDeprecation
-	if r.Deprecated_RulesetIPCIDRMatchSource {
-		r.Deprecated_RulesetIPCIDRMatchSource = false
-		r.RuleSetIPCIDRMatchSource = true
-	}
-	return nil
-}
-
 func (r *DefaultRule) IsValid() bool {
 	var defaultValue DefaultRule
 	defaultValue.Invert = r.Invert

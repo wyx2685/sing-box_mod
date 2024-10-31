@@ -109,22 +109,6 @@ type _DefaultDNSRule struct {
 	Deprecated_RulesetIPCIDRMatchSource bool `json:"rule_set_ipcidr_match_source,omitempty"`
 }
 
-type DefaultDNSRule _DefaultDNSRule
-
-func (r *DefaultDNSRule) UnmarshalJSON(bytes []byte) error {
-	err := json.UnmarshalDisallowUnknownFields(bytes, (*_DefaultDNSRule)(r))
-	if err != nil {
-		return err
-	}
-	//nolint:staticcheck
-	//goland:noinspection GoDeprecation
-	if r.Deprecated_RulesetIPCIDRMatchSource {
-		r.Deprecated_RulesetIPCIDRMatchSource = false
-		r.RuleSetIPCIDRMatchSource = true
-	}
-	return nil
-}
-
 func (r *DefaultDNSRule) IsValid() bool {
 	var defaultValue DefaultDNSRule
 	defaultValue.Invert = r.Invert

@@ -18,6 +18,7 @@ import (
 	"github.com/sagernet/sing/common/json"
 	"github.com/sagernet/sing/common/logger"
 	"github.com/sagernet/sing/common/x/list"
+	"github.com/sagernet/sing/service/filemanager"
 
 	"go4.org/netipx"
 )
@@ -35,7 +36,7 @@ type LocalRuleSet struct {
 	refs       atomic.Int32
 }
 
-func NewLocalRuleSet(router adapter.Router, logger logger.Logger, options option.RuleSet) (*LocalRuleSet, error) {
+func NewLocalRuleSet(ctx context.Context, router adapter.Router, logger logger.Logger, options option.RuleSet) (*LocalRuleSet, error) {
 	ruleSet := &LocalRuleSet{
 		router:     router,
 		logger:     logger,
@@ -51,13 +52,12 @@ func NewLocalRuleSet(router adapter.Router, logger logger.Logger, options option
 			return nil, err
 		}
 	} else {
-		err := ruleSet.reloadFile(options.LocalOptions.Path)
+		err := ruleSet.reloadFile(filemanager.BasePath(ctx, options.LocalOptions.Path))
 		if err != nil {
 			return nil, err
 		}
 	}
 	if options.Type == C.RuleSetTypeLocal {
-		var watcher *fswatch.Watcher
 		filePath, _ := filepath.Abs(options.LocalOptions.Path)
 		watcher, err := fswatch.NewWatcher(fswatch.Options{
 			Path: []string{filePath},
@@ -84,7 +84,7 @@ func (s *LocalRuleSet) String() string {
 	return strings.Join(F.MapToString(s.rules), " ")
 }
 
-func (s *LocalRuleSet) StartContext(ctx context.Context, startContext adapter.RuleSetStartContext) error {
+func (s *LocalRuleSet) StartContext(ctx context.Context, startContext *adapter.HTTPStartContext) error {
 	if s.watcher != nil {
 		err := s.watcher.Start()
 		if err != nil {
