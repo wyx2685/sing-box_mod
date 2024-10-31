@@ -64,7 +64,7 @@ func (r Rule) IsValid() bool {
 	}
 }
 
-type _DefaultRule struct {
+type DefaultRule struct {
 	Inbound                  Listable[string] `json:"inbound,omitempty"`
 	IPVersion                int              `json:"ip_version,omitempty"`
 	Network                  Listable[string] `json:"network,omitempty"`

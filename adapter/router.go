@@ -9,8 +9,9 @@ import (
 
 	"github.com/sagernet/sing-box/common/geoip"
 	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-dns"
-	"github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-box/option"
+	dns "github.com/sagernet/sing-dns"
+	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"

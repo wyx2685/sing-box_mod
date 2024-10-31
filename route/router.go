@@ -27,10 +27,10 @@ import (
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/outbound"
 	"github.com/sagernet/sing-box/transport/fakeip"
-	"github.com/sagernet/sing-dns"
-	"github.com/sagernet/sing-mux"
-	"github.com/sagernet/sing-tun"
-	"github.com/sagernet/sing-vmess"
+	dns "github.com/sagernet/sing-dns"
+	mux "github.com/sagernet/sing-mux"
+	tun "github.com/sagernet/sing-tun"
+	vmess "github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
@@ -1382,7 +1382,7 @@ func (r *Router) DelInbound(tag string) error {
 func (r *Router) UpdateDnsRules(rules []option.DNSRule) error {
 	dnsRules := make([]adapter.DNSRule, 0, len(rules))
 	for i, rule := range rules {
-		dnsRule, err := NewDNSRule(r, r.logger, rule, false)
+		dnsRule, err := NewDNSRule(r.ctx, r, r.logger, rule, false)
 		if err != nil {
 			return E.Cause(err, "parse dns rule[", i, "]")
 		}
