@@ -21,7 +21,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 	R "github.com/sagernet/sing-box/route/rule"
 	"github.com/sagernet/sing-box/transport/fakeip"
-	"github.com/sagernet/sing-dns"
+	dns "github.com/sagernet/sing-dns"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
@@ -502,6 +502,10 @@ func (r *Router) NeedWIFIState() bool {
 
 func (r *Router) Rules() []adapter.Rule {
 	return r.rules
+}
+
+func (r *Router) GetCtx() context.Context {
+	return r.ctx
 }
 
 func (r *Router) SetTracker(tracker adapter.ConnectionTracker) {

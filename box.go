@@ -412,6 +412,11 @@ func (s *Box) Router() adapter.Router {
 	return s.router
 }
 
+// for v2bx
+func (s *Box) LogFactory() log.Factory {
+	return s.logFactory
+}
+
 func (s *Box) Inbound() adapter.InboundManager {
 	return s.inbound
 }
