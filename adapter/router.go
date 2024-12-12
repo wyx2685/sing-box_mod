@@ -40,6 +40,9 @@ type Router interface {
 
 	SetTracker(tracker ConnectionTracker)
 
+	//for v2bx
+	GetCtx() context.Context
+
 	ResetNetwork()
 }
 

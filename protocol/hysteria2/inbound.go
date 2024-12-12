@@ -36,6 +36,8 @@ type Inbound struct {
 	tlsConfig    tls.ServerConfig
 	service      *hysteria2.Service[int]
 	userNameList []string
+	uidToUuid    map[int]string
+	uuidToUid    map[string]int
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.Hysteria2InboundOptions) (adapter.Inbound, error) {
@@ -132,6 +134,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	userList := make([]int, 0, len(options.Users))
 	userNameList := make([]string, 0, len(options.Users))
 	userPasswordList := make([]string, 0, len(options.Users))
+	uidToUuid := make(map[int]string, len(options.Users))
+	uuidToUid := make(map[string]int, len(options.Users))
 	for index, user := range options.Users {
 		userList = append(userList, index)
 		userNameList = append(userNameList, user.Name)
@@ -140,6 +144,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	service.UpdateUsers(userList, userPasswordList)
 	inbound.service = service
 	inbound.userNameList = userNameList
+	inbound.uidToUuid = uidToUuid
+	inbound.uuidToUid = uuidToUid
 	return inbound, nil
 }
 
@@ -157,11 +163,17 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
 	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+	if _, found := h.uidToUuid[userID]; found {
+		if userName := h.uidToUuid[userID]; userName != "" {
+			metadata.User = userName
+			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+		} else {
+			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		}
 	} else {
-		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		h.logger.WarnContext(ctx, "no valid user")
+		conn.Close()
+		return
 	}
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
 }
@@ -180,11 +192,17 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
 	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
+	if _, found := h.uidToUuid[userID]; found {
+		if userName := h.uidToUuid[userID]; userName != "" {
+			metadata.User = userName
+			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+		} else {
+			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		}
 	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		h.logger.WarnContext(ctx, "no valid user")
+		conn.Close()
+		return
 	}
 	h.router.RoutePacketConnectionEx(ctx, conn, metadata, onClose)
 }
@@ -212,4 +230,46 @@ func (h *Inbound) Close() error {
 		h.tlsConfig,
 		common.PtrOrNil(h.service),
 	)
+}
+
+func (h *Inbound) AddUsers(users []option.Hysteria2User, ids []int) error {
+	for i, user := range users {
+		h.userNameList = append(h.userNameList, user.Password)
+		h.uuidToUid[user.Password] = ids[i]
+		h.uidToUuid[ids[i]] = user.Password
+	}
+
+	indexs := make([]int, len(h.userNameList))
+	for i, uuid := range h.userNameList {
+		indexs[i] = h.uuidToUid[uuid]
+	}
+
+	h.service.UpdateUsers(indexs, h.userNameList)
+	return nil
+}
+
+func (h *Inbound) DelUsers(names []string) error {
+	if len(names) == 0 {
+		return nil
+	}
+
+	toDelete := make(map[string]struct{})
+	for _, name := range names {
+		toDelete[name] = struct{}{}
+	}
+
+	remaining := make([]string, 0, len(h.userNameList))
+	for _, user := range h.userNameList {
+		if _, found := toDelete[user]; !found {
+			remaining = append(remaining, user)
+		}
+	}
+
+	h.userNameList = remaining
+	indexs := make([]int, len(h.userNameList))
+	for i, uuid := range h.userNameList {
+		indexs[i] = h.uuidToUid[uuid]
+	}
+	h.service.UpdateUsers(indexs, h.userNameList)
+	return nil
 }

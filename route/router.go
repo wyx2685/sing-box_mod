@@ -504,6 +504,10 @@ func (r *Router) Rules() []adapter.Rule {
 	return r.rules
 }
 
+func (r *Router) GetCtx() context.Context {
+	return r.ctx
+}
+
 func (r *Router) SetTracker(tracker adapter.ConnectionTracker) {
 	r.tracker = tracker
 }

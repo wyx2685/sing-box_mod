@@ -35,6 +35,8 @@ type Inbound struct {
 	tlsConfig    tls.ServerConfig
 	server       *tuic.Service[int]
 	userNameList []string
+	uidToUuid    map[int]string
+	uuidToUid    map[string]int
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TUICInboundOptions) (adapter.Inbound, error) {
@@ -81,6 +83,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	var userNameList []string
 	var userUUIDList [][16]byte
 	var userPasswordList []string
+	uidToUuid := make(map[int]string, len(options.Users))
+	uuidToUid := make(map[string]int, len(options.Users))
 	for index, user := range options.Users {
 		if user.UUID == "" {
 			return nil, E.New("missing uuid for user ", index)
@@ -97,6 +101,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	service.UpdateUsers(userList, userUUIDList, userPasswordList)
 	inbound.server = service
 	inbound.userNameList = userNameList
+	inbound.uidToUuid = uidToUuid
+	inbound.uuidToUid = uuidToUid
 	return inbound, nil
 }
 
@@ -114,11 +120,17 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
 	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+	if _, found := h.uidToUuid[userID]; found {
+		if userName := h.uidToUuid[userID]; userName != "" {
+			metadata.User = userName
+			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+		} else {
+			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		}
 	} else {
-		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		h.logger.WarnContext(ctx, "no valid user")
+		conn.Close()
+		return
 	}
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
 }
@@ -137,11 +149,17 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
 	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
+	if _, found := h.uidToUuid[userID]; found {
+		if userName := h.uidToUuid[userID]; userName != "" {
+			metadata.User = userName
+			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+		} else {
+			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		}
 	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		h.logger.WarnContext(ctx, "no valid user")
+		conn.Close()
+		return
 	}
 	h.router.RoutePacketConnectionEx(ctx, conn, metadata, onClose)
 }
@@ -169,4 +187,58 @@ func (h *Inbound) Close() error {
 		h.tlsConfig,
 		common.PtrOrNil(h.server),
 	)
+}
+
+func (h *Inbound) AddUsers(users []option.TUICUser, ids []int) error {
+	for i, user := range users {
+		h.userNameList = append(h.userNameList, user.Name)
+		h.uuidToUid[user.UUID] = ids[i]
+		h.uidToUuid[ids[i]] = user.UUID
+	}
+	var userUUIDList [][16]byte
+	indexs := make([]int, len(h.userNameList))
+
+	for i, UUID := range h.userNameList {
+		indexs[i] = h.uuidToUid[UUID]
+		userUUID, err := uuid.FromString(UUID)
+		if err != nil {
+			return E.Cause(err, "invalid uuid for user ", i)
+		}
+		userUUIDList = append(userUUIDList, userUUID)
+	}
+
+	h.server.UpdateUsers(indexs, userUUIDList, h.userNameList)
+	return nil
+}
+
+func (h *Inbound) DelUsers(names []string) error {
+	if len(names) == 0 {
+		return nil
+	}
+
+	toDelete := make(map[string]struct{})
+	for _, name := range names {
+		toDelete[name] = struct{}{}
+	}
+
+	remaining := make([]string, 0, len(h.userNameList))
+	for _, user := range h.userNameList {
+		if _, found := toDelete[user]; !found {
+			remaining = append(remaining, user)
+		}
+	}
+
+	h.userNameList = remaining
+	var userUUIDList [][16]byte
+	indexs := make([]int, len(h.userNameList))
+	for i, UUID := range h.userNameList {
+		indexs[i] = h.uuidToUid[UUID]
+		userUUID, err := uuid.FromString(UUID)
+		if err != nil {
+			return E.Cause(err, "invalid uuid for user ", i)
+		}
+		userUUIDList = append(userUUIDList, userUUID)
+	}
+	h.server.UpdateUsers(indexs, userUUIDList, h.userNameList)
+	return nil
 }
