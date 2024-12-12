@@ -35,6 +35,8 @@ type Inbound struct {
 	tlsConfig    tls.ServerConfig
 	server       *tuic.Service[int]
 	userNameList []string
+	uidToUuid    map[int]string
+	uuidToUid    map[string]int
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TUICInboundOptions) (adapter.Inbound, error) {
@@ -169,4 +171,58 @@ func (h *Inbound) Close() error {
 		h.tlsConfig,
 		common.PtrOrNil(h.server),
 	)
+}
+
+func (h *Inbound) AddUsers(users []option.TUICUser, ids []int) error {
+	for i, user := range users {
+		h.userNameList = append(h.userNameList, user.Name)
+		h.uuidToUid[user.UUID] = ids[i]
+		h.uidToUuid[ids[i]] = user.UUID
+	}
+	var userUUIDList [][16]byte
+	indexs := make([]int, len(h.userNameList))
+
+	for i, UUID := range h.userNameList {
+		indexs[i] = h.uuidToUid[UUID]
+		userUUID, err := uuid.FromString(UUID)
+		if err != nil {
+			return E.Cause(err, "invalid uuid for user ", i)
+		}
+		userUUIDList = append(userUUIDList, userUUID)
+	}
+
+	h.server.UpdateUsers(indexs, userUUIDList, h.userNameList)
+	return nil
+}
+
+func (h *Inbound) DelUsers(names []string) error {
+	if len(names) == 0 {
+		return nil
+	}
+
+	toDelete := make(map[string]struct{})
+	for _, name := range names {
+		toDelete[name] = struct{}{}
+	}
+
+	remaining := make([]string, 0, len(h.userNameList))
+	for _, user := range h.userNameList {
+		if _, found := toDelete[user]; !found {
+			remaining = append(remaining, user)
+		}
+	}
+
+	h.userNameList = remaining
+	var userUUIDList [][16]byte
+	indexs := make([]int, len(h.userNameList))
+	for i, UUID := range h.userNameList {
+		indexs[i] = h.uuidToUid[UUID]
+		userUUID, err := uuid.FromString(UUID)
+		if err != nil {
+			return E.Cause(err, "invalid uuid for user ", i)
+		}
+		userUUIDList = append(userUUIDList, userUUID)
+	}
+	h.server.UpdateUsers(indexs, userUUIDList, h.userNameList)
+	return nil
 }
