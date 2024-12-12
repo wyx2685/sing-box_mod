@@ -83,6 +83,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	var userNameList []string
 	var userUUIDList [][16]byte
 	var userPasswordList []string
+	uidToUuid := make(map[int]string, len(options.Users))
+	uuidToUid := make(map[string]int, len(options.Users))
 	for index, user := range options.Users {
 		if user.UUID == "" {
 			return nil, E.New("missing uuid for user ", index)
@@ -99,6 +101,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	service.UpdateUsers(userList, userUUIDList, userPasswordList)
 	inbound.server = service
 	inbound.userNameList = userNameList
+	inbound.uidToUuid = uidToUuid
+	inbound.uuidToUid = uuidToUid
 	return inbound, nil
 }
 
