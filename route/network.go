@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/netip"
 	"os"
 	"runtime"
 	"strings"
@@ -55,14 +56,22 @@ type NetworkManager struct {
 }
 
 func NewNetworkManager(ctx context.Context, logger logger.ContextLogger, routeOptions option.RouteOptions) (*NetworkManager, error) {
+	defaultDomainResolver := common.PtrValueOrDefault(routeOptions.DefaultDomainResolver)
 	nm := &NetworkManager{
 		logger:              logger,
 		interfaceFinder:     control.NewDefaultInterfaceFinder(),
 		autoDetectInterface: routeOptions.AutoDetectInterface,
 		defaultOptions: adapter.NetworkOptions{
-			BindInterface:       routeOptions.DefaultInterface,
-			RoutingMark:         uint32(routeOptions.DefaultMark),
-			NetworkStrategy:     C.NetworkStrategy(routeOptions.DefaultNetworkStrategy),
+			BindInterface:  routeOptions.DefaultInterface,
+			RoutingMark:    uint32(routeOptions.DefaultMark),
+			DomainResolver: defaultDomainResolver.Server,
+			DomainResolveOptions: adapter.DNSQueryOptions{
+				Strategy:     C.DomainStrategy(defaultDomainResolver.Strategy),
+				DisableCache: defaultDomainResolver.DisableCache,
+				RewriteTTL:   defaultDomainResolver.RewriteTTL,
+				ClientSubnet: defaultDomainResolver.ClientSubnet.Build(netip.Prefix{}),
+			},
+			NetworkStrategy:     (*C.NetworkStrategy)(routeOptions.DefaultNetworkStrategy),
 			NetworkType:         common.Map(routeOptions.DefaultNetworkType, option.InterfaceType.Build),
 			FallbackNetworkType: common.Map(routeOptions.DefaultFallbackNetworkType, option.InterfaceType.Build),
 			FallbackDelay:       time.Duration(routeOptions.DefaultFallbackDelay),
@@ -73,7 +82,7 @@ func NewNetworkManager(ctx context.Context, logger logger.ContextLogger, routeOp
 		inbound:           service.FromContext[adapter.InboundManager](ctx),
 		outbound:          service.FromContext[adapter.OutboundManager](ctx),
 	}
-	if C.NetworkStrategy(routeOptions.DefaultNetworkStrategy) != C.NetworkStrategyDefault {
+	if routeOptions.DefaultNetworkStrategy != nil {
 		if routeOptions.DefaultInterface != "" {
 			return nil, E.New("`default_network_strategy` is conflict with `default_interface`")
 		}
@@ -90,9 +99,6 @@ func NewNetworkManager(ctx context.Context, logger logger.ContextLogger, routeOp
 				return nil, E.Cause(err, "create network monitor")
 			}
 			nm.networkMonitor = networkMonitor
-			networkMonitor.RegisterCallback(func() {
-				_ = nm.interfaceFinder.Update()
-			})
 			interfaceMonitor, err := tun.NewDefaultInterfaceMonitor(nm.networkMonitor, logger, tun.DefaultInterfaceMonitorOptions{
 				InterfaceFinder:       nm.interfaceFinder,
 				OverrideAndroidVPN:    routeOptions.OverrideAndroidVPN,

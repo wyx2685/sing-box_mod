@@ -11,6 +11,7 @@ import (
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/dialer"
+	"github.com/sagernet/sing-box/common/tlsfragment"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/bufio"
@@ -56,7 +57,7 @@ func (m *ConnectionManager) NewConnection(ctx context.Context, this N.Dialer, co
 		remoteConn net.Conn
 		err        error
 	)
-	if len(metadata.DestinationAddresses) > 0 {
+	if len(metadata.DestinationAddresses) > 0 || metadata.Destination.IsIP() {
 		remoteConn, err = dialer.DialSerialNetwork(ctx, this, N.NetworkTCP, metadata.Destination, metadata.DestinationAddresses, metadata.NetworkStrategy, metadata.NetworkType, metadata.FallbackNetworkType, metadata.FallbackDelay)
 	} else {
 		remoteConn, err = this.DialContext(ctx, N.NetworkTCP, metadata.Destination)
@@ -74,6 +75,21 @@ func (m *ConnectionManager) NewConnection(ctx context.Context, this N.Dialer, co
 		N.CloseOnHandshakeFailure(conn, onClose, err)
 		m.logger.ErrorContext(ctx, err)
 		return
+	}
+	if metadata.TLSFragment {
+		fallbackDelay := metadata.TLSFragmentFallbackDelay
+		if fallbackDelay == 0 {
+			fallbackDelay = C.TLSFragmentFallbackDelay
+		}
+		var newConn *tf.Conn
+		newConn, err = tf.NewConn(remoteConn, ctx, fallbackDelay)
+		if err != nil {
+			conn.Close()
+			remoteConn.Close()
+			m.logger.ErrorContext(ctx, err)
+			return
+		}
+		remoteConn = newConn
 	}
 	m.access.Lock()
 	element := m.connections.PushBack(conn)
@@ -97,11 +113,18 @@ func (m *ConnectionManager) NewPacketConnection(ctx context.Context, this N.Dial
 		err                error
 	)
 	if metadata.UDPConnect {
+		parallelDialer, isParallelDialer := this.(dialer.ParallelInterfaceDialer)
 		if len(metadata.DestinationAddresses) > 0 {
-			if parallelDialer, isParallelDialer := this.(dialer.ParallelInterfaceDialer); isParallelDialer {
+			if isParallelDialer {
 				remoteConn, err = dialer.DialSerialNetwork(ctx, parallelDialer, N.NetworkUDP, metadata.Destination, metadata.DestinationAddresses, metadata.NetworkStrategy, metadata.NetworkType, metadata.FallbackNetworkType, metadata.FallbackDelay)
 			} else {
 				remoteConn, err = N.DialSerial(ctx, this, N.NetworkUDP, metadata.Destination, metadata.DestinationAddresses)
+			}
+		} else if metadata.Destination.IsIP() {
+			if isParallelDialer {
+				remoteConn, err = dialer.DialSerialNetwork(ctx, parallelDialer, N.NetworkUDP, metadata.Destination, metadata.DestinationAddresses, metadata.NetworkStrategy, metadata.NetworkType, metadata.FallbackNetworkType, metadata.FallbackDelay)
+			} else {
+				remoteConn, err = this.DialContext(ctx, N.NetworkUDP, metadata.Destination)
 			}
 		} else {
 			remoteConn, err = this.DialContext(ctx, N.NetworkUDP, metadata.Destination)
@@ -217,6 +240,17 @@ func (m *ConnectionManager) connectionCopy(ctx context.Context, source io.Reader
 			continue
 		}
 		break
+	}
+	if earlyConn, isEarlyConn := common.Cast[N.EarlyConn](destination); isEarlyConn && earlyConn.NeedHandshake() {
+		_, err := destination.Write(nil)
+		if err != nil {
+			if !direction {
+				m.logger.ErrorContext(ctx, "connection upload handshake: ", err)
+			} else {
+				m.logger.ErrorContext(ctx, "connection download handshake: ", err)
+			}
+			return
+		}
 	}
 	_, err := bufio.CopyWithCounters(destination, source, originSource, readCounters, writeCounters)
 	if err != nil {

@@ -18,7 +18,6 @@ import (
 	"github.com/sagernet/sing-box/experimental/deprecated"
 	"github.com/sagernet/sing-box/experimental/libbox/internal/procfs"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
-	"github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-tun"
@@ -35,7 +34,7 @@ import (
 type BoxService struct {
 	ctx                   context.Context
 	cancel                context.CancelFunc
-	urlTestHistoryStorage *urltest.HistoryStorage
+	urlTestHistoryStorage adapter.URLTestHistoryStorage
 	instance              *box.Box
 	clashServer           adapter.ClashServer
 	pauseManager          pause.Manager
@@ -44,7 +43,7 @@ type BoxService struct {
 }
 
 func NewService(configContent string, platformInterface PlatformInterface) (*BoxService, error) {
-	ctx := box.Context(context.Background(), include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry())
+	ctx := BaseContext(platformInterface)
 	ctx = filemanager.WithDefault(ctx, sWorkingPath, sTempPath, sUserID, sGroupID)
 	service.MustRegister[deprecated.Manager](ctx, new(deprecatedManager))
 	options, err := parseConfig(ctx, configContent)
@@ -81,7 +80,7 @@ func NewService(configContent string, platformInterface PlatformInterface) (*Box
 }
 
 func (s *BoxService) Start() error {
-	if C.FixAndroidStack {
+	if sFixAndroidStack {
 		var err error
 		done := make(chan struct{})
 		go func() {
@@ -148,10 +147,10 @@ func (w *platformInterfaceWrapper) AutoDetectInterfaceControl(fd int) error {
 
 func (w *platformInterfaceWrapper) OpenTun(options *tun.Options, platformOptions option.TunPlatformOptions) (tun.Tun, error) {
 	if len(options.IncludeUID) > 0 || len(options.ExcludeUID) > 0 {
-		return nil, E.New("android: unsupported uid options")
+		return nil, E.New("platform: unsupported uid options")
 	}
 	if len(options.IncludeAndroidUser) > 0 {
-		return nil, E.New("android: unsupported android_user option")
+		return nil, E.New("platform: unsupported android_user option")
 	}
 	routeRanges, err := options.BuildAutoRouteRanges(true)
 	if err != nil {
@@ -192,6 +191,9 @@ func (w *platformInterfaceWrapper) Interfaces() ([]adapter.NetworkInterface, err
 			continue
 		}
 		w.defaultInterfaceAccess.Lock()
+		// (GOOS=windows) SA4006: this value of `isDefault` is never used
+		// Why not used?
+		//nolint:staticcheck
 		isDefault := w.defaultInterface != nil && int(netInterface.Index) == w.defaultInterface.Index
 		w.defaultInterfaceAccess.Unlock()
 		interfaces = append(interfaces, adapter.NetworkInterface{
@@ -229,6 +231,10 @@ func (w *platformInterfaceWrapper) ReadWIFIState() adapter.WIFIState {
 		return adapter.WIFIState{}
 	}
 	return (adapter.WIFIState)(*wifiState)
+}
+
+func (w *platformInterfaceWrapper) SystemCertificates() []string {
+	return iteratorToArray[string](w.iif.SystemCertificates())
 }
 
 func (w *platformInterfaceWrapper) FindProcessInfo(ctx context.Context, network string, source netip.AddrPort, destination netip.AddrPort) (*process.Info, error) {

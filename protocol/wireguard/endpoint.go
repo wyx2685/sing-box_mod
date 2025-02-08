@@ -13,7 +13,6 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/transport/wireguard"
-	"github.com/sagernet/sing-dns"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/bufio"
 	E "github.com/sagernet/sing/common/exceptions"
@@ -36,6 +35,7 @@ type Endpoint struct {
 	endpoint.Adapter
 	ctx            context.Context
 	router         adapter.Router
+	dnsRouter      adapter.DNSRouter
 	logger         logger.ContextLogger
 	localAddresses []netip.Prefix
 	endpoint       *wireguard.Endpoint
@@ -46,13 +46,21 @@ func NewEndpoint(ctx context.Context, router adapter.Router, logger log.ContextL
 		Adapter:        endpoint.NewAdapterWithDialerOptions(C.TypeWireGuard, tag, []string{N.NetworkTCP, N.NetworkUDP}, options.DialerOptions),
 		ctx:            ctx,
 		router:         router,
+		dnsRouter:      service.FromContext[adapter.DNSRouter](ctx),
 		logger:         logger,
 		localAddresses: options.Address,
 	}
 	if options.Detour == "" {
 		options.IsWireGuardListener = true
 	}
-	outboundDialer, err := dialer.New(ctx, options.DialerOptions)
+	outboundDialer, err := dialer.NewWithOptions(dialer.Options{
+		Context: ctx,
+		Options: options.DialerOptions,
+		RemoteIsDomain: common.Any(options.Peers, func(it option.WireGuardPeer) bool {
+			return !M.ParseAddr(it.Address).IsValid()
+		}),
+		ResolverOnDetour: true,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +78,7 @@ func NewEndpoint(ctx context.Context, router adapter.Router, logger log.ContextL
 		UDPTimeout: udpTimeout,
 		Dialer:     outboundDialer,
 		CreateDialer: func(interfaceName string) N.Dialer {
-			return common.Must1(dialer.NewDefault(service.FromContext[adapter.NetworkManager](ctx), option.DialerOptions{
+			return common.Must1(dialer.NewDefault(ctx, option.DialerOptions{
 				BindInterface: interfaceName,
 			}))
 		},
@@ -80,7 +88,7 @@ func NewEndpoint(ctx context.Context, router adapter.Router, logger log.ContextL
 		PrivateKey: options.PrivateKey,
 		ListenPort: options.ListenPort,
 		ResolvePeer: func(domain string) (netip.Addr, error) {
-			endpointAddresses, lookupErr := router.Lookup(ctx, domain, dns.DomainStrategy(options.DomainStrategy))
+			endpointAddresses, lookupErr := ep.dnsRouter.Lookup(ctx, domain, outboundDialer.(dialer.ResolveDialer).QueryOptions())
 			if lookupErr != nil {
 				return netip.Addr{}, lookupErr
 			}
@@ -186,7 +194,7 @@ func (w *Endpoint) DialContext(ctx context.Context, network string, destination 
 		w.logger.InfoContext(ctx, "outbound packet connection to ", destination)
 	}
 	if destination.IsFqdn() {
-		destinationAddresses, err := w.router.LookupDefault(ctx, destination.Fqdn)
+		destinationAddresses, err := w.dnsRouter.Lookup(ctx, destination.Fqdn, adapter.DNSQueryOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -200,7 +208,7 @@ func (w *Endpoint) DialContext(ctx context.Context, network string, destination 
 func (w *Endpoint) ListenPacket(ctx context.Context, destination M.Socksaddr) (net.PacketConn, error) {
 	w.logger.InfoContext(ctx, "outbound packet connection to ", destination)
 	if destination.IsFqdn() {
-		destinationAddresses, err := w.router.LookupDefault(ctx, destination.Fqdn)
+		destinationAddresses, err := w.dnsRouter.Lookup(ctx, destination.Fqdn, adapter.DNSQueryOptions{})
 		if err != nil {
 			return nil, err
 		}

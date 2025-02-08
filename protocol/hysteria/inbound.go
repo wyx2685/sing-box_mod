@@ -67,7 +67,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	if len(options.Down) > 0 {
 		receiveBps, err = humanize.ParseBytes(options.Down)
 		if err != nil {
-			return nil, E.New("invalid down speed format: ", options.Down)
+			return nil, E.Cause(err, "invalid down speed format: ", options.Down)
 		}
 	} else {
 		receiveBps = uint64(options.DownMbps) * hysteria.MbpsToBps
@@ -187,44 +187,4 @@ func (h *Inbound) Close() error {
 		h.tlsConfig,
 		common.PtrOrNil(h.service),
 	)
-}
-
-func (h *Inbound) AddUsers(users []option.HysteriaUser) error {
-	for _, user := range users {
-		h.userNameList = append(h.userNameList, user.AuthString)
-	}
-
-	indexs := make([]int, len(h.userNameList))
-	for i := range h.userNameList {
-		indexs[i] = i
-	}
-
-	h.service.UpdateUsers(indexs, h.userNameList)
-	return nil
-}
-
-func (h *Inbound) DelUsers(names []string) error {
-	if len(names) == 0 {
-		return nil
-	}
-
-	toDelete := make(map[string]struct{})
-	for _, name := range names {
-		toDelete[name] = struct{}{}
-	}
-
-	remaining := make([]string, 0, len(h.userNameList))
-	for _, user := range h.userNameList {
-		if _, found := toDelete[user]; !found {
-			remaining = append(remaining, user)
-		}
-	}
-
-	h.userNameList = remaining
-	indexs := make([]int, len(h.userNameList))
-	for i := range h.userNameList {
-		indexs[i] = i
-	}
-	h.service.UpdateUsers(indexs, h.userNameList)
-	return nil
 }

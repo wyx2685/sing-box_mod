@@ -35,12 +35,12 @@ func (d *DefaultDialer) dialParallelInterface(ctx context.Context, dialer net.Di
 		conn, err := perNetDialer.DialContext(ctx, network, addr)
 		if err != nil {
 			select {
-			case results <- dialResult{error: E.Cause(err, "dial ", iif.Name, " (", iif.Name, ")"), primary: primary}:
+			case results <- dialResult{error: E.Cause(err, "dial ", iif.Name, " (", iif.Index, ")"), primary: primary}:
 			case <-returned:
 			}
 		} else {
 			select {
-			case results <- dialResult{Conn: conn}:
+			case results <- dialResult{Conn: conn, primary: primary}:
 			case <-returned:
 				conn.Close()
 			}
@@ -107,12 +107,12 @@ func (d *DefaultDialer) dialParallelInterfaceFastFallback(ctx context.Context, d
 		conn, err := perNetDialer.DialContext(ctx, network, addr)
 		if err != nil {
 			select {
-			case results <- dialResult{error: E.Cause(err, "dial ", iif.Name, " (", iif.Name, ")"), primary: primary}:
+			case results <- dialResult{error: E.Cause(err, "dial ", iif.Name, " (", iif.Index, ")"), primary: primary}:
 			case <-returned:
 			}
 		} else {
 			select {
-			case results <- dialResult{Conn: conn}:
+			case results <- dialResult{Conn: conn, primary: primary}:
 			case <-returned:
 				if primary && time.Since(startAt) <= fallbackDelay {
 					resetFastFallback(time.Time{})
@@ -157,7 +157,7 @@ func (d *DefaultDialer) listenSerialInterfacePacket(ctx context.Context, listene
 		if err == nil {
 			return conn, nil
 		}
-		errors = append(errors, E.Cause(err, "listen ", primaryInterface.Name, " (", primaryInterface.Name, ")"))
+		errors = append(errors, E.Cause(err, "listen ", primaryInterface.Name, " (", primaryInterface.Index, ")"))
 	}
 	for _, fallbackInterface := range fallbackInterfaces {
 		perNetListener := listener
@@ -166,7 +166,7 @@ func (d *DefaultDialer) listenSerialInterfacePacket(ctx context.Context, listene
 		if err == nil {
 			return conn, nil
 		}
-		errors = append(errors, E.Cause(err, "listen ", fallbackInterface.Name, " (", fallbackInterface.Name, ")"))
+		errors = append(errors, E.Cause(err, "listen ", fallbackInterface.Name, " (", fallbackInterface.Index, ")"))
 	}
 	return nil, E.Errors(errors...)
 }
@@ -177,44 +177,57 @@ func selectInterfaces(networkManager adapter.NetworkManager, strategy C.NetworkS
 	case C.NetworkStrategyDefault:
 		if len(interfaceType) == 0 {
 			defaultIf := networkManager.InterfaceMonitor().DefaultInterface()
-			for _, iif := range interfaces {
-				if iif.Index == defaultIf.Index {
-					primaryInterfaces = append(primaryInterfaces, iif)
-				} else {
-					fallbackInterfaces = append(fallbackInterfaces, iif)
+			if defaultIf != nil {
+				for _, iif := range interfaces {
+					if iif.Index == defaultIf.Index {
+						primaryInterfaces = append(primaryInterfaces, iif)
+					}
 				}
+			} else {
+				primaryInterfaces = interfaces
 			}
 		} else {
-			primaryInterfaces = common.Filter(interfaces, func(iif adapter.NetworkInterface) bool {
-				return common.Contains(interfaceType, iif.Type)
+			primaryInterfaces = common.Filter(interfaces, func(it adapter.NetworkInterface) bool {
+				return common.Contains(interfaceType, it.Type)
 			})
 		}
 	case C.NetworkStrategyHybrid:
 		if len(interfaceType) == 0 {
 			primaryInterfaces = interfaces
 		} else {
-			primaryInterfaces = common.Filter(interfaces, func(iif adapter.NetworkInterface) bool {
-				return common.Contains(interfaceType, iif.Type)
+			primaryInterfaces = common.Filter(interfaces, func(it adapter.NetworkInterface) bool {
+				return common.Contains(interfaceType, it.Type)
 			})
 		}
 	case C.NetworkStrategyFallback:
 		if len(interfaceType) == 0 {
 			defaultIf := networkManager.InterfaceMonitor().DefaultInterface()
-			for _, iif := range interfaces {
-				if iif.Index == defaultIf.Index {
-					primaryInterfaces = append(primaryInterfaces, iif)
-				} else {
-					fallbackInterfaces = append(fallbackInterfaces, iif)
+			if defaultIf != nil {
+				for _, iif := range interfaces {
+					if iif.Index == defaultIf.Index {
+						primaryInterfaces = append(primaryInterfaces, iif)
+						break
+					}
 				}
+			} else {
+				primaryInterfaces = interfaces
 			}
 		} else {
-			primaryInterfaces = common.Filter(interfaces, func(iif adapter.NetworkInterface) bool {
-				return common.Contains(interfaceType, iif.Type)
+			primaryInterfaces = common.Filter(interfaces, func(it adapter.NetworkInterface) bool {
+				return common.Contains(interfaceType, it.Type)
 			})
 		}
-		fallbackInterfaces = common.Filter(interfaces, func(iif adapter.NetworkInterface) bool {
-			return common.Contains(fallbackInterfaceType, iif.Type)
-		})
+		if len(fallbackInterfaceType) == 0 {
+			fallbackInterfaces = common.Filter(interfaces, func(it adapter.NetworkInterface) bool {
+				return !common.Any(primaryInterfaces, func(iif adapter.NetworkInterface) bool {
+					return it.Index == iif.Index
+				})
+			})
+		} else {
+			fallbackInterfaces = common.Filter(interfaces, func(iif adapter.NetworkInterface) bool {
+				return common.Contains(fallbackInterfaceType, iif.Type)
+			})
+		}
 	}
 	return primaryInterfaces, fallbackInterfaces
 }

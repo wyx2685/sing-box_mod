@@ -159,16 +159,16 @@ func (h *Inbound) Close() error {
 }
 
 func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {
-	var err error
 	if h.tlsConfig != nil && h.transport == nil {
-		conn, err = tls.ServerHandshake(ctx, conn, h.tlsConfig)
+		tlsConn, err := tls.ServerHandshake(ctx, conn, h.tlsConfig)
 		if err != nil {
 			N.CloseOnHandshakeFailure(conn, onClose, err)
 			h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source, ": TLS handshake"))
 			return
 		}
+		conn = tlsConn
 	}
-	err = h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, metadata.Source, onClose)
+	err := h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, metadata.Source, onClose)
 	if err != nil {
 		N.CloseOnHandshakeFailure(conn, onClose, err)
 		h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source))
@@ -254,33 +254,4 @@ func (h *inboundTransportHandler) NewConnectionEx(ctx context.Context, conn net.
 	metadata.InboundOptions = h.listener.ListenOptions().InboundOptions
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
 	(*Inbound)(h).NewConnectionEx(ctx, conn, metadata, onClose)
-}
-
-func (h *Inbound) AddUsers(users []option.TrojanUser) error {
-	h.users = append(h.users, users...)
-	err := h.service.UpdateUsers(common.MapIndexed(h.users, func(index int, user option.TrojanUser) int {
-		return index
-	}), common.Map(h.users, func(user option.TrojanUser) string {
-		return user.Password
-	}))
-	return err
-}
-func (h *Inbound) DelUsers(names []string) error {
-	nameMap := make(map[string]struct{}, len(names))
-	for _, name := range names {
-		nameMap[name] = struct{}{}
-	}
-	filteredUsers := make([]option.TrojanUser, 0, len(h.users))
-	for _, user := range h.users {
-		if _, found := nameMap[user.Name]; !found {
-			filteredUsers = append(filteredUsers, user)
-		}
-	}
-	h.users = filteredUsers
-	err := h.service.UpdateUsers(common.MapIndexed(h.users, func(index int, user option.TrojanUser) int {
-		return index
-	}), common.Map(h.users, func(user option.TrojanUser) string {
-		return user.Password
-	}))
-	return err
 }

@@ -2,6 +2,11 @@
 icon: material/new-box
 ---
 
+!!! quote "Changes in sing-box 1.12.0"
+
+    :material-plus: [tls_fragment](#tls_fragment)  
+    :material-plus: [tls_fragment_fallback_delay](#tls_fragment_fallback_delay)
+
 ## Final actions
 
 ### route
@@ -31,6 +36,45 @@ Tag of target outbound.
 
 See `route-options` fields below.
 
+### reject
+
+```json
+{
+  "action": "reject",
+  "method": "default", // default
+  "no_drop": false
+}
+```
+
+`reject` reject connections
+
+The specified method is used for reject tun connections if `sniff` action has not been performed yet.
+
+For non-tun connections and already established connections, will just be closed.
+
+#### method
+
+- `default`: Reply with TCP RST for TCP connections, and ICMP port unreachable for UDP packets.
+- `drop`: Drop packets.
+
+#### no_drop
+
+If not enabled, `method` will be temporarily overwritten to `drop` after 50 triggers in 30s.
+
+Not available when `method` is set to drop.
+
+### hijack-dns
+
+```json
+{
+  "action": "hijack-dns"
+}
+```
+
+`hijack-dns` hijack DNS requests to the sing-box DNS module.
+
+## Non-final actions
+
 ### route-options
 
 ```json
@@ -42,7 +86,9 @@ See `route-options` fields below.
   "fallback_delay": "",
   "udp_disable_domain_unmapping": false,
   "udp_connect": false,
-  "udp_timeout": ""
+  "udp_timeout": "",
+  "tls_fragment": false,
+  "tls_fragment_fallback_delay": ""
 }
 ```
 
@@ -109,44 +155,27 @@ If no protocol is sniffed, the following ports will be recognized as protocols b
 | 443  | `quic`   |
 | 3478 | `stun`   |
 
-### reject
+#### tls_fragment
 
-```json
-{
-  "action": "reject",
-  "method": "default", // default
-  "no_drop": false
-}
-```
+!!! question "Since sing-box 1.12.0"
 
-`reject` reject connections
+Fragment TLS handshakes to bypass firewalls.
 
-The specified method is used for reject tun connections if `sniff` action has not been performed yet.
+This feature is intended to circumvent simple firewalls based on **plaintext packet matching**, and should not be used to circumvent real censorship.
 
-For non-tun connections and already established connections, will just be closed.
+Since it is not designed for performance, it should not be applied to all connections, but only to server names that are known to be blocked.
 
-#### method
+On Linux, Apple platforms, (administrator privileges required) Windows, the wait time can be automatically detected, otherwise it will fall back to waiting for a fixed time specified by `tls_fragment_fallback_delay`.
 
-- `default`: Reply with TCP RST for TCP connections, and ICMP port unreachable for UDP packets.
-- `drop`: Drop packets.
+In addition, if the actual wait time is less than 20ms, it will also fall back to waiting for a fixed time, because the target is considered to be local or behind a transparent proxy.
 
-#### no_drop
+#### tls_fragment_fallback_delay
 
-If not enabled, `method` will be temporarily overwritten to `drop` after 50 triggers in 30s.
+!!! question "Since sing-box 1.12.0"
 
-Not available when `method` is set to drop.
+The fallback value used when TLS segmentation cannot automatically determine the wait time.
 
-### hijack-dns
-
-```json
-{
-  "action": "hijack-dns"
-}
-```
-
-`hijack-dns` hijack DNS requests to the sing-box DNS module.
-
-## Non-final actions
+`500ms` is used by default.
 
 ### sniff
 

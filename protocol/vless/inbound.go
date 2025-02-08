@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"os"
-	"strings"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
@@ -140,20 +139,16 @@ func (h *Inbound) Close() error {
 }
 
 func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {
-	var err error
 	if h.tlsConfig != nil && h.transport == nil {
-		conn, err = tls.ServerHandshake(ctx, conn, h.tlsConfig)
+		tlsConn, err := tls.ServerHandshake(ctx, conn, h.tlsConfig)
 		if err != nil {
-			if conn != nil {
-				N.CloseOnHandshakeFailure(conn, onClose, err)
-			}
-			if !strings.Contains(err.Error(), "REALITY: processed invalid connection") {
-				h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source, ": TLS handshake"))
-			}
+			N.CloseOnHandshakeFailure(conn, onClose, err)
+			h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source, ": TLS handshake"))
 			return
 		}
+		conn = tlsConn
 	}
-	err = h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, metadata.Source, onClose)
+	err := h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, metadata.Source, onClose)
 	if err != nil {
 		N.CloseOnHandshakeFailure(conn, onClose, err)
 		h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source))
@@ -212,45 +207,4 @@ func (h *inboundTransportHandler) NewConnectionEx(ctx context.Context, conn net.
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound connection from ", metadata.Source)
 	(*Inbound)(h).NewConnectionEx(ctx, conn, metadata, onClose)
-}
-
-func (h *Inbound) AddUsers(users []option.VLESSUser) error {
-	h.users = append(h.users, users...)
-	h.service.UpdateUsers(
-		common.MapIndexed(h.users, func(index int, it option.VLESSUser) int {
-			return index
-		}),
-		common.Map(h.users, func(it option.VLESSUser) string {
-			return it.UUID
-		}),
-		common.Map(h.users, func(it option.VLESSUser) string {
-			return it.Flow
-		}),
-	)
-	return nil
-}
-func (h *Inbound) DelUsers(names []string) error {
-	toDelete := make(map[string]struct{})
-	for _, name := range names {
-		toDelete[name] = struct{}{}
-	}
-	remaining := make([]option.VLESSUser, 0)
-	for _, user := range h.users {
-		if _, found := toDelete[user.Name]; !found {
-			remaining = append(remaining, user)
-		}
-	}
-	h.users = remaining
-	h.service.UpdateUsers(
-		common.MapIndexed(h.users, func(index int, it option.VLESSUser) int {
-			return index
-		}),
-		common.Map(h.users, func(it option.VLESSUser) string {
-			return it.UUID
-		}),
-		common.Map(h.users, func(it option.VLESSUser) string {
-			return it.Flow
-		}),
-	)
-	return nil
 }

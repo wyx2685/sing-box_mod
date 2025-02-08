@@ -74,8 +74,8 @@ type InboundRealityOptions struct {
 	Handshake         InboundRealityHandshakeOptions `json:"handshake,omitempty"`
 	PrivateKey        string                         `json:"private_key,omitempty"`
 	ShortID           badoption.Listable[string]     `json:"short_id,omitempty"`
-	MaxTimeDifference badoption.Duration             `json:"max_time_difference,omitempty"`
 	Xver              uint8                          `json:"xver,omitempty"`
+	MaxTimeDifference badoption.Duration             `json:"max_time_difference,omitempty"`
 }
 
 type InboundRealityHandshakeOptions struct {

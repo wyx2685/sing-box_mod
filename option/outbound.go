@@ -65,25 +65,58 @@ type DialerOptionsWrapper interface {
 }
 
 type DialerOptions struct {
-	Detour               string                            `json:"detour,omitempty"`
-	BindInterface        string                            `json:"bind_interface,omitempty"`
-	Inet4BindAddress     *badoption.Addr                   `json:"inet4_bind_address,omitempty"`
-	Inet6BindAddress     *badoption.Addr                   `json:"inet6_bind_address,omitempty"`
-	ProtectPath          string                            `json:"protect_path,omitempty"`
-	RoutingMark          FwMark                            `json:"routing_mark,omitempty"`
-	ReuseAddr            bool                              `json:"reuse_addr,omitempty"`
-	ConnectTimeout       badoption.Duration                `json:"connect_timeout,omitempty"`
-	TCPFastOpen          bool                              `json:"tcp_fast_open,omitempty"`
-	TCPMultiPath         bool                              `json:"tcp_multi_path,omitempty"`
-	UDPFragment          *bool                             `json:"udp_fragment,omitempty"`
-	UDPFragmentDefault   bool                              `json:"-"`
-	DomainStrategy       DomainStrategy                    `json:"domain_strategy,omitempty"`
-	NetworkStrategy      NetworkStrategy                   `json:"network_strategy,omitempty"`
-	NetworkType          badoption.Listable[InterfaceType] `json:"network_type,omitempty"`
-	FallbackNetworkType  badoption.Listable[InterfaceType] `json:"fallback_network_type,omitempty"`
-	FallbackDelay        badoption.Duration                `json:"fallback_delay,omitempty"`
-	NetworkFallbackDelay badoption.Duration                `json:"network_fallback_delay,omitempty"`
-	IsWireGuardListener  bool                              `json:"-"`
+	Detour              string                            `json:"detour,omitempty"`
+	BindInterface       string                            `json:"bind_interface,omitempty"`
+	Inet4BindAddress    *badoption.Addr                   `json:"inet4_bind_address,omitempty"`
+	Inet6BindAddress    *badoption.Addr                   `json:"inet6_bind_address,omitempty"`
+	ProtectPath         string                            `json:"protect_path,omitempty"`
+	RoutingMark         FwMark                            `json:"routing_mark,omitempty"`
+	ReuseAddr           bool                              `json:"reuse_addr,omitempty"`
+	ConnectTimeout      badoption.Duration                `json:"connect_timeout,omitempty"`
+	TCPFastOpen         bool                              `json:"tcp_fast_open,omitempty"`
+	TCPMultiPath        bool                              `json:"tcp_multi_path,omitempty"`
+	UDPFragment         *bool                             `json:"udp_fragment,omitempty"`
+	UDPFragmentDefault  bool                              `json:"-"`
+	DomainResolver      *DomainResolveOptions             `json:"domain_resolver,omitempty"`
+	NetworkStrategy     *NetworkStrategy                  `json:"network_strategy,omitempty"`
+	NetworkType         badoption.Listable[InterfaceType] `json:"network_type,omitempty"`
+	FallbackNetworkType badoption.Listable[InterfaceType] `json:"fallback_network_type,omitempty"`
+	FallbackDelay       badoption.Duration                `json:"fallback_delay,omitempty"`
+	IsWireGuardListener bool                              `json:"-"`
+
+	// Deprecated: migrated to domain resolver
+	DomainStrategy DomainStrategy `json:"domain_strategy,omitempty"`
+}
+
+type _DomainResolveOptions struct {
+	Server       string                `json:"server"`
+	Strategy     DomainStrategy        `json:"strategy,omitempty"`
+	DisableCache bool                  `json:"disable_cache,omitempty"`
+	RewriteTTL   *uint32               `json:"rewrite_ttl,omitempty"`
+	ClientSubnet *badoption.Prefixable `json:"client_subnet,omitempty"`
+}
+
+type DomainResolveOptions _DomainResolveOptions
+
+func (o DomainResolveOptions) MarshalJSON() ([]byte, error) {
+	if o.Strategy == DomainStrategy(C.DomainStrategyAsIS) &&
+		!o.DisableCache &&
+		o.RewriteTTL == nil &&
+		o.ClientSubnet == nil {
+		return json.Marshal(o.Server)
+	} else {
+		return json.Marshal((_DomainResolveOptions)(o))
+	}
+}
+
+func (o *DomainResolveOptions) UnmarshalJSON(bytes []byte) error {
+	var stringValue string
+	err := json.Unmarshal(bytes, &stringValue)
+	if err == nil {
+		o.Server = stringValue
+		return nil
+	}
+	return json.Unmarshal(bytes, (*_DomainResolveOptions)(o))
 }
 
 func (o *DialerOptions) TakeDialerOptions() DialerOptions {
@@ -106,6 +139,10 @@ type ServerOptions struct {
 
 func (o ServerOptions) Build() M.Socksaddr {
 	return M.ParseSocksaddrHostPort(o.Server, o.ServerPort)
+}
+
+func (o ServerOptions) ServerIsDomain() bool {
+	return M.IsDomainName(o.Server)
 }
 
 func (o *ServerOptions) TakeServerOptions() ServerOptions {

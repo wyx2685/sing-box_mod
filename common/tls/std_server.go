@@ -99,7 +99,7 @@ func (c *STDServerConfig) startWatcher() error {
 		Callback: func(path string) {
 			err := c.certificateUpdated(path)
 			if err != nil {
-				c.logger.Error(err)
+				c.logger.Error(E.Cause(err, "reload certificate"))
 			}
 		},
 	})
@@ -222,7 +222,7 @@ func NewSTDServer(ctx context.Context, logger log.Logger, options option.Inbound
 		}
 		if certificate == nil && key == nil && options.Insecure {
 			tlsConfig.GetCertificate = func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
-				return GenerateCertificate(ntp.TimeFuncFromContext(ctx), info.ServerName)
+				return GenerateKeyPair(nil, nil, ntp.TimeFuncFromContext(ctx), info.ServerName)
 			}
 		} else {
 			if certificate == nil {
