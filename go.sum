@@ -164,6 +164,8 @@ github.com/vishvananda/netns v0.0.4 h1:Oeaw1EM2JMxD51g9uhtC0D7erkIjgmj8+JZc26m1Y
 github.com/vishvananda/netns v0.0.4/go.mod h1:SpkAiCQRtJ6TvvxPnOSyH3BMl6unz3xZlaprSwhNNJM=
 github.com/wyx2685/sing-vmess v0.0.0-20241213093025-7de21a950272 h1:T1Bd7Cookzc/zbQoXV3nqugQl5X0hnmNvR5haU/QKpE=
 github.com/wyx2685/sing-vmess v0.0.0-20241213093025-7de21a950272/go.mod h1:hutc8pVvq29h64EyIBdohKYOnhbnWYnl+CrrW3jX7MQ=
+github.com/wyx2685/sing-vmess v0.0.0-20250208043059-9bd6d628dc1c h1:/Rs7wibIQyOQy6XmW1BkBhnXpbdtJXX80fuFDI7KMC4=
+github.com/wyx2685/sing-vmess v0.0.0-20250208043059-9bd6d628dc1c/go.mod h1:/92DiwmRNxEIl7Q+qDmFhKTiiYOmnAMVcAdfP/s/R8E=
 github.com/xtls/reality v0.0.0-20240909153216-e26ae2305463 h1:g1Cj7d+my6k/HHxLAyxPwyX8i7FGRr6ulBDMkBzg2BM=
 github.com/xtls/reality v0.0.0-20240909153216-e26ae2305463/go.mod h1:BjIOLmkEEtAgloAiVUcYj0Mt+YU00JARZw8AEU0IwAg=
 github.com/zeebo/assert v1.1.0 h1:hU1L1vLTHsnO8x8c9KAR5GmM5QscxHg5RNU5z5qbUWY=
