@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 	"os"
+	"strings"
+	"sync"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
@@ -15,9 +17,6 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/transport/v2ray"
-	"github.com/sagernet/sing-vmess"
-	"github.com/sagernet/sing-vmess/packetaddr"
-	"github.com/sagernet/sing-vmess/vless"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/auth"
 	E "github.com/sagernet/sing/common/exceptions"
@@ -25,6 +24,9 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	vmess "github.com/wyx2685/sing-vmess"
+	"github.com/wyx2685/sing-vmess/packetaddr"
+	"github.com/wyx2685/sing-vmess/vless"
 )
 
 func RegisterInbound(registry *inbound.Registry) {
@@ -43,6 +45,7 @@ type Inbound struct {
 	service   *vless.Service[int]
 	tlsConfig tls.ServerConfig
 	transport adapter.V2RayServerTransport
+	userconns sync.Map
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.VLESSInboundOptions) (adapter.Inbound, error) {
@@ -86,6 +89,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		Listen:            options.ListenOptions,
 		ConnectionHandler: inbound,
 	})
+	inbound.userconns = sync.Map{}
 	return inbound, nil
 }
 
@@ -142,12 +146,20 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, metadata a
 	if h.tlsConfig != nil && h.transport == nil {
 		tlsConn, err := tls.ServerHandshake(ctx, conn, h.tlsConfig)
 		if err != nil {
-			N.CloseOnHandshakeFailure(conn, onClose, err)
-			h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source, ": TLS handshake"))
+			if conn != nil {
+				N.CloseOnHandshakeFailure(conn, onClose, err)
+			}
+			if !strings.Contains(err.Error(), "REALITY: processed invalid connection") {
+				h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source, ": TLS handshake"))
+			}
 			return
 		}
 		conn = tlsConn
 	}
+	h.userconns.Store(conn, metadata.User)
+	onClose = N.AppendClose(onClose, func(err error) {
+		h.userconns.Delete(conn)
+	})
 	err := h.service.NewConnection(adapter.WithContext(ctx, &metadata), conn, metadata.Source, onClose)
 	if err != nil {
 		N.CloseOnHandshakeFailure(conn, onClose, err)

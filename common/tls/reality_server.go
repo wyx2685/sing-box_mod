@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"net"
 	"time"
 
@@ -18,18 +17,17 @@ import (
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ntp"
-
-	utls "github.com/metacubex/utls"
+	"github.com/xtls/reality"
 )
 
 var _ ServerConfigCompat = (*RealityServerConfig)(nil)
 
 type RealityServerConfig struct {
-	config *utls.RealityConfig
+	config *reality.Config
 }
 
 func NewRealityServer(ctx context.Context, logger log.Logger, options option.InboundTLSOptions) (*RealityServerConfig, error) {
-	var tlsConfig utls.RealityConfig
+	var tlsConfig reality.Config
 
 	if options.ACME != nil && len(options.ACME.Domain) > 0 {
 		return nil, E.New("acme is unavailable in reality")
@@ -75,12 +73,8 @@ func NewRealityServer(ctx context.Context, logger log.Logger, options option.Inb
 	}
 
 	tlsConfig.SessionTicketsDisabled = true
-	tlsConfig.Log = func(format string, v ...any) {
-		if logger != nil {
-			logger.Trace(fmt.Sprintf(format, v...))
-		}
-	}
 	tlsConfig.Type = N.NetworkTCP
+	tlsConfig.Xver = options.Reality.Xver
 	tlsConfig.Dest = options.Reality.Handshake.ServerOptions.Build().String()
 
 	tlsConfig.ServerNames = map[string]bool{options.ServerName: true}
@@ -159,7 +153,7 @@ func (c *RealityServerConfig) Server(conn net.Conn) (Conn, error) {
 }
 
 func (c *RealityServerConfig) ServerHandshake(ctx context.Context, conn net.Conn) (Conn, error) {
-	tlsConn, err := utls.RealityServer(ctx, conn, c.config)
+	tlsConn, err := reality.Server(ctx, conn, c.config)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +169,7 @@ func (c *RealityServerConfig) Clone() Config {
 var _ Conn = (*realityConnWrapper)(nil)
 
 type realityConnWrapper struct {
-	*utls.Conn
+	*reality.Conn
 }
 
 func (c *realityConnWrapper) ConnectionState() ConnectionState {

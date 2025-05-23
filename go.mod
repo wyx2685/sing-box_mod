@@ -1,9 +1,11 @@
 module github.com/sagernet/sing-box
 
-go 1.23.1
+go 1.24
+
+toolchain go1.24.0
 
 require (
-	github.com/anytls/sing-anytls v0.0.8
+	github.com/anytls/sing-anytls v0.0.9-0.20250508103614-8bc6dd599731
 	github.com/caddyserver/certmagic v0.23.0
 	github.com/cloudflare/circl v1.6.1
 	github.com/coder/websocket v1.8.12
@@ -43,6 +45,8 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/vishvananda/netns v0.0.5
+	github.com/wyx2685/sing-vmess v0.0.0-20250208043059-9bd6d628dc1c
+	github.com/xtls/reality v0.0.0-20240909153216-e26ae2305463
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.38.0
@@ -102,12 +106,14 @@ require (
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
+	github.com/pires/go-proxyproto v0.7.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus-community/pro-bing v0.4.0 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/safchain/ethtool v0.3.0 // indirect
 	github.com/sagernet/netlink v0.0.0-20240612041022-b9a21c07ac6a // indirect
 	github.com/sagernet/nftables v0.3.0-beta.4 // indirect
+	github.com/sagernet/utls v1.6.7 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/tailscale/certstore v0.1.1-0.20231202035212-d3fa0460f47e // indirect
 	github.com/tailscale/go-winio v0.0.0-20231025203758-c4f33415bf55 // indirect
