@@ -7,7 +7,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 )
 
-func (h *Inbound) AddUsers(users []option.AnyTLSUser, ids []int) error {
+func (h *Inbound) AddUsers(users []option.AnyTLSUser) error {
 	for _, user := range users {
 		h.uuidlist = append(h.uuidlist, user.Name)
 	}
