@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -36,6 +37,9 @@ type Inbound struct {
 	tlsConfig    tls.ServerConfig
 	service      *hysteria2.Service[int]
 	userNameList []string
+	uidToUuid    map[int]string
+	uuidToUid    map[string]int
+	userconns    sync.Map
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.Hysteria2InboundOptions) (adapter.Inbound, error) {
@@ -140,6 +144,9 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	service.UpdateUsers(userList, userPasswordList)
 	inbound.service = service
 	inbound.userNameList = userNameList
+	inbound.uidToUuid = make(map[int]string, len(options.Users))
+	inbound.uuidToUid = make(map[string]int, len(options.Users))
+	inbound.userconns = sync.Map{}
 	return inbound, nil
 }
 
@@ -180,11 +187,21 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
 	userID, _ := auth.UserFromContext[int](ctx)
-	if userName := h.userNameList[userID]; userName != "" {
-		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
+	if userName, found := h.uidToUuid[userID]; found {
+		if userName != "" {
+			metadata.User = userName
+			h.userconns.LoadOrStore(conn, userName)
+			onClose = N.AppendClose(onClose, func(err error) {
+				h.userconns.Delete(conn)
+			})
+			h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
+		} else {
+			h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		}
 	} else {
-		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+		h.logger.WarnContext(ctx, "no valid user: ", userID, " for inbound packet connection to ", metadata.Destination)
+		conn.Close()
+		return
 	}
 	h.router.RoutePacketConnectionEx(ctx, conn, metadata, onClose)
 }

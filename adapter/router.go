@@ -26,6 +26,8 @@ type Router interface {
 	Rules() []Rule
 	AppendTracker(tracker ConnectionTracker)
 	ResetNetwork()
+	//for v2bx
+	GetCtx() context.Context
 }
 
 type ConnectionTracker interface {
