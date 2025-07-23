@@ -135,7 +135,7 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 		}
 	} else {
-		h.logger.WarnContext(ctx, "no valid user: ", userID, " for inbound packet connection to ", metadata.Destination)
+		h.logger.WarnContext(ctx, "no valid user: ", userID, " for inbound connection to ", metadata.Destination)
 		conn.Close()
 		return
 	}
@@ -156,19 +156,19 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 	metadata.Destination = destination
 	h.logger.InfoContext(ctx, "inbound packet connection from ", metadata.Source)
 	userID, _ := auth.UserFromContext[int](ctx)
-	if _, found := h.uidToUuid[userID]; found {
-		if userName := h.uidToUuid[userID]; userName != "" {
+	if userName, found := h.uidToUuid[userID]; found {
+		if userName != "" {
 			metadata.User = userName
 			h.userconns.LoadOrStore(conn, userName)
 			onClose = N.AppendClose(onClose, func(err error) {
 				h.userconns.Delete(conn)
 			})
-			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+			h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 		} else {
-			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+			h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
 		}
 	} else {
-		h.logger.WarnContext(ctx, "no valid user")
+		h.logger.WarnContext(ctx, "no valid user: ", userID, " for inbound packet connection to ", metadata.Destination)
 		conn.Close()
 		return
 	}
