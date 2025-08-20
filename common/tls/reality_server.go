@@ -201,3 +201,11 @@ func (c *realityConnWrapper) Upstream() any {
 func (c *realityConnWrapper) CloseWrite() error {
 	return c.Close()
 }
+
+func (c *realityConnWrapper) ReaderReplaceable() bool {
+	return true
+}
+
+func (c *realityConnWrapper) WriterReplaceable() bool {
+	return true
+}
