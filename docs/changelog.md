@@ -2,7 +2,128 @@
 icon: material/alert-decagram
 ---
 
-#### 1.13.0-alpha.5
+#### 1.13.0-alpha.28
+
+* Fixes and improvements
+
+_We are currently unable to notarize the standalone version of SFM for unknown reasons (TestFlight users are not affected).
+Providing this update is not recommended for package managers that offer SFM standalone binaries._
+
+#### 1.12.13
+
+* Fixes and improvements
+
+_We are currently unable to notarize the standalone version of SFM for unknown reasons (TestFlight users are not affected).
+Providing this update is not recommended for package managers that offer SFM standalone binaries._
+
+#### 1.12.12
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.26
+
+* Update quic-go to v0.55.0
+* Fix memory leak in hysteria2
+* Fixes and improvements
+
+#### 1.12.11
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.24
+
+* Add Claude Code Multiplexer service **1**
+* Fixes and improvements
+
+**1**:
+
+CCM (Claude Code Multiplexer) service allows you to access your local Claude Code subscription remotely through custom tokens, eliminating the need for OAuth authentication on remote clients.
+
+See [CCM](/configuration/service/ccm).
+
+#### 1.13.0-alpha.23
+
+* Fix compatibility with MPTCP **1**
+* Fixes and improvements
+
+**1**:
+
+`auto_redirect` now rejects MPTCP connections by default to fix compatibility issues,
+but you can change it to bypass the sing-box via the new `exclude_mptcp` option.
+
+See [TUN](/configuration/inbound/tun/#exclude_mptcp).
+
+#### 1.13.0-alpha.22
+
+* Update uTLS to v1.8.1 **1**
+* Fixes and improvements
+
+**1**:
+
+This update fixes an critical issue that could cause simulated Chrome fingerprints to be detected,
+see https://github.com/refraction-networking/utls/pull/375.
+
+#### 1.12.10
+
+* Update uTLS to v1.8.1 **1**
+* Fixes and improvements
+
+**1**:
+
+This update fixes an critical issue that could cause simulated Chrome fingerprints to be detected,
+see https://github.com/refraction-networking/utls/pull/375.
+
+#### 1.13.0-alpha.21
+
+* Fix missing mTLS support in client options **1**
+* Fixes and improvements
+
+See [TLS](/configuration/shared/tls/).
+
+#### 1.12.9
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.16
+
+* Add curve preferences, pinned public key SHA256 and mTLS for TLS options **1**
+* Fixes and improvements
+
+See [TLS](/configuration/shared/tls/).
+
+#### 1.13.0-alpha.15
+
+* Update quic-go to v0.54.0
+* Update gVisor to v20250811
+* Update Tailscale to v1.86.5
+* Fixes and improvements
+
+#### 1.12.8
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.11
+
+* Fixes and improvements
+
+#### 1.12.5
+
+* Fixes and improvements
+
+#### 1.13.0-alpha.10
+
+* Improve kTLS support **1**
+* Fixes and improvements
+
+**1**:
+
+kTLS is now compatible with custom TLS implementations other than uTLS.
+
+#### 1.12.4
+
+* Fixes and improvements
+
+#### 1.12.3
 
 * Fixes and improvements
 
@@ -10,47 +131,11 @@ icon: material/alert-decagram
 
 * Fixes and improvements
 
-#### 1.13.0-alpha.3
-
-* Improve `local` DNS server **1**
-* Fixes and improvements
-
-**1**:
-
-On Apple platforms, Windows, and Linux (when using systemd-resolved), 
-`local` DNS server now works with Tun inbound which overrides system DNS servers.
-
-See [Local DNS Server](/configuration/dns/server/local/).
-
-#### 1.13.0-alpha.2
-
-* Add `preferred_by` rule item **1**
-* Fixes and improvements
-
-**1**:
-
-The new `preferred_by` routing rule item allows you to
-match preferred domains and addresses for specific outbounds.
-
-See [Route Rule](/configuration/route/rule/#preferred_by).
-
-#### 1.13.0-alpha.1
-
-* Add interface address rule items **1**
-* Fixes and improvements
-
-**1**:
-
-New interface address rules allow you to dynamically adjust rules based on your network environment.
-
-See [Route Rule](/configuration/route/rule/), [DNS Route Rule](/configuration/dns/rule/)
-and [Headless Rule](/configuration/rule-set/headless-rule/).
-
 #### 1.12.1
 
 * Fixes and improvements
 
-### 1.12.0
+#### 1.12.0
 
 * Refactor DNS servers **1**
 * Add domain resolver options**2**
@@ -116,7 +201,8 @@ See [Tailscale](/configuration/endpoint/tailscale/).
 
 Due to maintenance difficulties, sing-box 1.12.0 requires at least Go 1.23 to compile.
 
-For Windows 7 users, legacy binaries now continue to compile with Go 1.23 and patches from [MetaCubeX/go](https://github.com/MetaCubeX/go).
+For Windows 7 users, legacy binaries now continue to compile with Go 1.23 and patches
+from [MetaCubeX/go](https://github.com/MetaCubeX/go).
 
 **7**:
 
@@ -178,7 +264,8 @@ See [Tun](/configuration/inbound/tun/#loopback_address).
 
 We have significantly improved the performance of tun inbound on Apple platforms, especially in the gVisor stack.
 
-The following data was tested using [tun_bench](https://github.com/SagerNet/sing-box/blob/dev-next/cmd/internal/tun_bench/main.go) on M4 MacBook pro.
+The following data was tested
+using [tun_bench](https://github.com/SagerNet/sing-box/blob/dev-next/cmd/internal/tun_bench/main.go) on M4 MacBook pro.
 
 | Version     | Stack  | MTU   | Upload | Download |
 |-------------|--------|-------|--------|----------|
@@ -197,11 +284,11 @@ The following data was tested using [tun_bench](https://github.com/SagerNet/sing
 
 **18**:
 
-We continue to experience issues updating our sing-box apps on the App Store and Play Store. 
-Until we rewrite and resubmit the apps, they are considered irrecoverable. 
+We continue to experience issues updating our sing-box apps on the App Store and Play Store.
+Until we rewrite and resubmit the apps, they are considered irrecoverable.
 Therefore, after this release, we will not be repeating this notice unless there is new information.
 
-#### 1.11.15
+### 1.11.15
 
 * Fixes and improvements
 
@@ -217,7 +304,7 @@ violated the rules (TestFlight users are not affected)._
 
 We have significantly improved the performance of tun inbound on Apple platforms, especially in the gVisor stack.
 
-#### 1.11.14
+### 1.11.14
 
 * Fixes and improvements
 
@@ -267,7 +354,7 @@ You can now choose what the DERP home page shows, just like with derper's `-home
 
 See [DERP](/configuration/service/derp/#home).
 
-#### 1.11.13
+### 1.11.13
 
 * Fixes and improvements
 
@@ -305,7 +392,7 @@ SSM API service is a RESTful API server for managing Shadowsocks servers.
 
 See [SSM API Service](/configuration/service/ssm-api/).
 
-#### 1.11.11
+### 1.11.11
 
 * Fixes and improvements
 
@@ -337,7 +424,7 @@ You can now set `bind_interface`, `routing_mark` and `reuse_addr` in Listen Fiel
 
 See [Listen Fields](/configuration/shared/listen/).
 
-#### 1.11.10
+### 1.11.10
 
 * Undeprecate the `block` outbound **1**
 * Fixes and improvements
@@ -355,7 +442,7 @@ violated the rules (TestFlight users are not affected)._
 * Update quic-go to v0.51.0
 * Fixes and improvements
 
-#### 1.11.9
+### 1.11.9
 
 * Fixes and improvements
 
@@ -366,7 +453,7 @@ violated the rules (TestFlight users are not affected)._
 
 * Fixes and improvements
 
-#### 1.11.8
+### 1.11.8
 
 * Improve `auto_redirect` **1**
 * Fixes and improvements
@@ -383,7 +470,7 @@ violated the rules (TestFlight users are not affected)._
 
 * Fixes and improvements
 
-#### 1.11.7
+### 1.11.7
 
 * Fixes and improvements
 
@@ -399,7 +486,7 @@ violated the rules (TestFlight users are not affected)._
 Now `auto_redirect` fixes compatibility issues between tun and Docker bridge networks,
 see [Tun](/configuration/inbound/tun/#auto_redirect).
 
-#### 1.11.6
+### 1.11.6
 
 * Fixes and improvements
 
@@ -440,7 +527,7 @@ See [Protocol Sniff](/configuration/route/sniff/).
 
 See [Dial Fields](/configuration/shared/dial/#domain_resolver).
 
-#### 1.11.5
+### 1.11.5
 
 * Fixes and improvements
 
@@ -456,7 +543,7 @@ violated the rules (TestFlight users are not affected)._
 
 See [DNS Rule Action](/configuration/dns/rule_action/#predefined).
 
-#### 1.11.4
+### 1.11.4
 
 * Fixes and improvements
 
@@ -479,7 +566,8 @@ See [AnyTLS Inbound](/configuration/inbound/anytls/) and [AnyTLS Outbound](/conf
 
 **2**:
 
-`resolve` route action now accepts `disable_cache` and other options like in DNS route actions, see [Route Action](/configuration/route/rule_action).
+`resolve` route action now accepts `disable_cache` and other options like in DNS route actions,
+see [Route Action](/configuration/route/rule_action).
 
 **3**:
 
@@ -510,9 +598,10 @@ See [Tailscale](/configuration/endpoint/tailscale/).
 
 Due to maintenance difficulties, sing-box 1.12.0 requires at least Go 1.23 to compile.
 
-For Windows 7 users, legacy binaries now continue to compile with Go 1.23 and patches from [MetaCubeX/go](https://github.com/MetaCubeX/go).
+For Windows 7 users, legacy binaries now continue to compile with Go 1.23 and patches
+from [MetaCubeX/go](https://github.com/MetaCubeX/go).
 
-#### 1.11.3
+### 1.11.3
 
 * Fixes and improvements
 
@@ -523,7 +612,7 @@ process._
 
 * Fixes and improvements
 
-#### 1.11.1
+### 1.11.1
 
 * Fixes and improvements
 
@@ -702,7 +791,7 @@ See [Hysteria2](/configuration/outbound/hysteria2/).
 
 When `up_mbps` and `down_mbps` are set, `ignore_client_bandwidth` instead denies clients from using BBR CC.
 
-#### 1.10.7
+### 1.10.7
 
 * Fixes and improvements
 
@@ -797,7 +886,7 @@ and the old outbound will be removed in sing-box 1.13.0.
 See [Endpoint](/configuration/endpoint/), [WireGuard Endpoint](/configuration/endpoint/wireguard/)
 and [Migrate WireGuard outbound fields to route options](/migration/#migrate-wireguard-outbound-to-endpoint).
 
-#### 1.10.2
+### 1.10.2
 
 * Add deprecated warnings
 * Fix proxying websocket connections in HTTP/mixed inbounds
@@ -934,7 +1023,7 @@ See [Rule Action](/configuration/route/rule_action/).
 * Update quic-go to v0.48.0
 * Fixes and improvements
 
-#### 1.10.1
+### 1.10.1
 
 * Fixes and improvements
 

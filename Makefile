@@ -1,6 +1,6 @@
 NAME = sing-box
 COMMIT = $(shell git rev-parse --short HEAD)
-TAGS ?= with_gvisor,with_quic,with_dhcp,with_wireguard,with_utls,with_acme,with_clash_api,with_tailscale
+TAGS ?= with_gvisor,with_quic,with_dhcp,with_wireguard,with_utls,with_acme,with_clash_api,with_tailscale,with_ccm,badlinkname,tfogo_checklinkname0
 
 GOHOSTOS = $(shell go env GOHOSTOS)
 GOHOSTARCH = $(shell go env GOHOSTARCH)
@@ -16,6 +16,10 @@ PREFIX ?= $(shell go env GOPATH)
 build:
 	export GOTOOLCHAIN=local && \
 	go build $(MAIN_PARAMS) $(MAIN)
+
+race:
+	export GOTOOLCHAIN=local && \
+	go build -race $(MAIN_PARAMS) $(MAIN)
 
 ci_build:
 	export GOTOOLCHAIN=local && \
@@ -34,7 +38,7 @@ fmt:
 	@gci write --custom-order -s standard -s "prefix(github.com/sagernet/)" -s "default" .
 
 fmt_install:
-	go install -v mvdan.cc/gofumpt@latest
+	go install -v mvdan.cc/gofumpt@v0.8.0
 	go install -v github.com/daixiang0/gci@latest
 
 lint:
@@ -45,7 +49,7 @@ lint:
 	GOOS=freebsd golangci-lint run ./...
 
 lint_install:
-	go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+	go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
 
 proto:
 	@go run ./cmd/internal/protogen
