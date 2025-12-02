@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/sagernet/sing-box/common/dialer"
-	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	E "github.com/sagernet/sing/common/exceptions"
@@ -66,10 +65,7 @@ func NewRealityServer(ctx context.Context, logger log.Logger, options option.Inb
 			return nil, E.New("unknown cipher_suite: ", cipherSuite)
 		}
 	}
-	if len(options.CurvePreferences) > 0 {
-		return nil, E.New("curve preferences is unavailable in reality")
-	}
-	if len(options.Certificate) > 0 || options.CertificatePath != "" || len(options.ClientCertificatePublicKeySHA256) > 0 {
+	if len(options.Certificate) > 0 || options.CertificatePath != "" {
 		return nil, E.New("certificate is unavailable in reality")
 	}
 	if len(options.Key) > 0 || options.KeyPath != "" {
@@ -117,22 +113,7 @@ func NewRealityServer(ctx context.Context, logger log.Logger, options option.Inb
 		return handshakeDialer.DialContext(ctx, network, M.ParseSocksaddr(addr))
 	}
 
-	if options.ECH != nil && options.ECH.Enabled {
-		return nil, E.New("Reality is conflict with ECH")
-	}
-	var config ServerConfig = &RealityServerConfig{&tlsConfig}
-	if options.KernelTx || options.KernelRx {
-		if !C.IsLinux {
-			return nil, E.New("kTLS is only supported on Linux")
-		}
-		config = &KTlSServerConfig{
-			ServerConfig: config,
-			logger:       logger,
-			kernelTx:     options.KernelTx,
-			kernelRx:     options.KernelRx,
-		}
-	}
-	return config, nil
+	return &RealityServerConfig{&tlsConfig}, nil
 }
 
 func (c *RealityServerConfig) ServerName() string {
@@ -151,7 +132,7 @@ func (c *RealityServerConfig) SetNextProtos(nextProto []string) {
 	c.config.NextProtos = nextProto
 }
 
-func (c *RealityServerConfig) STDConfig() (*tls.Config, error) {
+func (c *RealityServerConfig) Config() (*tls.Config, error) {
 	return nil, E.New("unsupported usage for reality")
 }
 
