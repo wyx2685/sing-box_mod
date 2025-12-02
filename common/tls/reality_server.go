@@ -136,6 +136,10 @@ func (c *RealityServerConfig) Config() (*tls.Config, error) {
 	return nil, E.New("unsupported usage for reality")
 }
 
+func (c *RealityServerConfig) STDConfig() (*tls.Config, error) {
+	return nil, E.New("unsupported usage for reality")
+}
+
 func (c *RealityServerConfig) Client(conn net.Conn) (Conn, error) {
 	return ClientHandshake(context.Background(), conn, c)
 }
